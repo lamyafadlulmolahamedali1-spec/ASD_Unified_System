@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software in your research, please cite it as:"
+title: "ASD Companion Robot - AI-Powered Therapeutic System for Children with Autism"
+authors:
+  - family-names: "Ali"
+    given-names: "Lamya F. H."
+    email: "lamyafadlulmolahamedali1@gmail.com"
+date-released: 2026-04-07
+version: 1.0.0
+repository-code: "https://github.com/lamyafadlulmolahamedali1-spec/ASD_Unified_System"
+url: "https://github.com/lamyafadlulmolahamedali1-spec/ASD_Unified_System"
+license: MIT
+type: software
