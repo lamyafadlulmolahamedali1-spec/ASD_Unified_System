@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BrainEngage - Memory Game</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <script src="/static/js/pepper-voice.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 { color: #333; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .card {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5em;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .card.flipped { background: white; border: 3px solid #667eea; }
+        .card.matched { background: #d4edda; cursor: default; opacity: 0.7; }
+        .back-btn { display: inline-block; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧠 BrainEngage - Memory Match</h1>
+        <div class="grid" id="grid"></div>
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('brain_engage');
+        let cards = [];
+        let flipped = [];
+        let canFlip = true;
+        let matches = 0;
+        
+        const emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊'];
+        
+        function initGame() {
+            cards = [...emojis, ...emojis];
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+            matches = 0;
+            flipped = [];
+            canFlip = true;
+            render();
+            PepperVoice.speak("Match the pairs! Find the same pictures!");
+        }
+        
+        function render() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            cards.forEach((card, i) => {
+                const div = document.createElement('div');
+                div.className = 'card';
+                if (flipped.includes(i)) div.classList.add('flipped');
+                if (card === 'matched') div.classList.add('matched');
+                div.textContent = flipped.includes(i) ? card : '?';
+                div.onclick = () => flipCard(i);
+                grid.appendChild(div);
+            });
+        }
+        
+        function flipCard(i) {
+            if (!canFlip) return;
+            if (flipped.includes(i)) return;
+            if (cards[i] === 'matched') return;
+            if (flipped.length >= 2) return;
+            
+            flipped.push(i);
+            if (flipped.length === 2) {
+                canFlip = false;
+                setTimeout(checkMatch, 500);
+            }
+            render();
+        }
+        
+        function checkMatch() {
+            const [i, j] = flipped;
+            if (cards[i] === cards[j]) {
+                cards[i] = 'matched';
+                cards[j] = 'matched';
+                matches++;
+                stats.addCorrect();
+                PepperVoice.speak("Great match! Keep going!");
+                if (matches === 6) {
+                    stats.levelUp();
+                    PepperVoice.speak("Wonderful! You completed the level!");
+                    setTimeout(() => initGame(), 1500);
+                }
+            } else {
+                stats.addWrong();
+                PepperVoice.speak("Not a match. Try again!");
+            }
+            flipped = [];
+            canFlip = true;
+            render();
+        }
+        
+        initGame();
+    </script>
+</body>
+</html>

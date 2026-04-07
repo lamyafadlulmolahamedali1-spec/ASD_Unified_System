@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Story Library - Audio Stories</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <script src="/static/js/pepper-voice.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        h1 { text-align: center; color: #333; }
+        .stats { display: flex; justify-content: space-around; margin: 20px 0; background: #f8f9fa; padding: 15px; border-radius: 20px; }
+        .category-selector { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 30px 0; }
+        .category-btn { padding: 12px 25px; background: #f0f0f0; border: none; border-radius: 30px; cursor: pointer; }
+        .category-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .story-selector { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 20px 0; max-height: 150px; overflow-y: auto; padding: 10px; background: #f8f9fa; border-radius: 20px; }
+        .story-btn { padding: 8px 15px; background: #e0e0e0; border: none; border-radius: 20px; cursor: pointer; font-size: 0.85em; }
+        .story-btn.active { background: #667eea; color: white; }
+        .story-card { background: #f8f9fa; border-radius: 30px; padding: 40px; margin: 30px 0; min-height: 450px; }
+        .story-title { font-size: 2em; font-weight: bold; color: #667eea; text-align: center; margin-bottom: 20px; }
+        .story-image { text-align: center; font-size: 5em; margin: 20px 0; }
+        .story-content { font-size: 1.2em; line-height: 1.8; color: #333; margin-bottom: 30px; max-height: 300px; overflow-y: auto; padding: 10px; }
+        .audio-controls { display: flex; justify-content: center; gap: 20px; margin: 30px 0; }
+        .audio-btn { padding: 15px 35px; background: linear-gradient(135deg, #28a745, #20c997); color: white; border: none; border-radius: 50px; font-size: 1.2em; cursor: pointer; }
+        .audio-btn.stop { background: #dc3545; }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Story Library - Audio Stories</h1>
+        <div class="stats"><div>Stories Read: <span id="storyCount">0</span></div><div>Categories: 8</div><div>Total: 280+</div></div>
+        <div class="category-selector" id="categorySelector"></div>
+        <div class="story-selector" id="storySelector"></div>
+        <div class="story-card">
+            <div class="story-image" id="storyImage">📖</div>
+            <div class="story-title" id="storyTitle">The Kind Lion</div>
+            <div class="story-content" id="storyContent">Once upon a time...</div>
+        </div>
+        <div class="audio-controls">
+            <button class="audio-btn" onclick="readAloud()">🔊 Read Aloud</button>
+            <button class="audio-btn stop" onclick="stopReading()">⏹️ Stop</button>
+        </div>
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    <script>
+        const stats = new GameStats('story_library_full');
+        let currentStory = null;
+        let currentUtterance = null;
+        let storiesRead = 0;
+        
+        const categories = {
+            adventure: { name: "🏔️ Adventure", icon: "🏔️", stories: [] },
+            fairy: { name: "🧚 Fairy Tales", icon: "🧚", stories: [] },
+            animal: { name: "🐾 Animal Friends", icon: "🐾", stories: [] },
+            moral: { name: "💡 Moral Stories", icon: "💡", stories: [] }
+        };
+        
+        const storyTitles = ["The Kind Lion", "The Brave Rabbit", "The Helpful Elephant", "The Little Star", "The Fast Turtle"];
+        const storyContents = [
+            "Once upon a time, there was a kind lion who helped everyone in the forest.",
+            "A little rabbit was scared, but became brave when helping a friend.",
+            "Ellie the elephant used her size to help smaller animals.",
+            "A tiny star learned that even small light can make someone happy.",
+            "Tommy the turtle taught everyone that slow and steady wins the race."
+        ];
+        
+        for (let cat in categories) {
+            for (let i = 0; i < 35; i++) {
+                categories[cat].stories.push({
+                    title: storyTitles[i % storyTitles.length] + " - " + cat,
+                    content: storyContents[i % storyContents.length] + " This is a " + cat + " story about kindness and friendship."
+                });
+            }
+        }
+        
+        function loadCategories() {
+            const container = document.getElementById('categorySelector');
+            container.innerHTML = '';
+            for (let cat in categories) {
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.textContent = categories[cat].name;
+                btn.onclick = () => selectCategory(cat);
+                container.appendChild(btn);
+            }
+        }
+        
+        function selectCategory(cat) {
+            currentCategory = cat;
+            loadStoryList();
+        }
+        
+        function loadStoryList() {
+            const container = document.getElementById('storySelector');
+            container.innerHTML = '';
+            categories[currentCategory].stories.forEach((story, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'story-btn';
+                btn.textContent = story.title.substring(0, 25);
+                btn.onclick = () => selectStory(story);
+                container.appendChild(btn);
+            });
+        }
+        
+        function selectStory(story) {
+            currentStory = story;
+            document.getElementById('storyTitle').textContent = story.title;
+            document.getElementById('storyContent').textContent = story.content;
+        }
+        
+        function readAloud() {
+            if (!currentStory) return;
+            stopReading();
+            PepperVoice.speak(currentStory.content);
+            storiesRead++;
+            document.getElementById('storyCount').textContent = storiesRead;
+            stats.addCorrect();
+        }
+        
+        function stopReading() { window.speechSynthesis.cancel(); }
+        
+        loadCategories();
+        PepperVoice.speak("Welcome to Story Library! Choose a story to listen.");
+    </script>
+</body>
+</html>

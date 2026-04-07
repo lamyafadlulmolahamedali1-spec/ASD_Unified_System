@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Alarm - Daily Routine</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .alarm-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .alarm-clock {
+            background: var(--gradient-3);
+            padding: 40px;
+            border-radius: 30px;
+            color: white;
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .time-display {
+            font-size: 5em;
+            font-weight: bold;
+            font-family: monospace;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .alarm-status {
+            font-size: 1.5em;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .task-list {
+            display: grid;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        
+        .task-item {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .task-item:hover {
+            transform: translateX(10px);
+            background: var(--gradient-4);
+            color: white;
+        }
+        
+        .task-item.completed {
+            background: var(--success);
+            color: white;
+            text-decoration: line-through;
+        }
+        
+        .task-icon {
+            font-size: 2em;
+        }
+        
+        .next-level-btn {
+            padding: 15px 40px;
+            background: var(--gradient-1);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3em;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: 0.3s;
+        }
+        
+        .next-level-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="alarm-container">
+            <h1>⏰ Smart Alarm</h1>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="day">Day 1</div>
+                    <div class="stat-label">Current Day</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="tasksLeft">4</div>
+                    <div class="stat-label">Tasks Left</div>
+                </div>
+            </div>
+            
+            <div class="alarm-clock">
+                <div class="time-display" id="time">07:00</div>
+                <div class="alarm-status" id="status">🌅 Wake Up Time!</div>
+            </div>
+            
+            <div class="task-list" id="taskList"></div>
+            
+            <button class="next-level-btn" onclick="nextDay()">🌟 Next Day</button>
+        </div>
+    </div>
+    
+    <script>
+        let day = 1;
+        let completedTasks = 0;
+        
+        const routines = {
+            morning: [
+                {icon: '🌅', time: '07:00', task: 'Wake up', done: false},
+                {icon: '🧼', time: '07:15', task: 'Wash face', done: false},
+                {icon: '🪥', time: '07:20', task: 'Brush teeth', done: false},
+                {icon: '👕', time: '07:30', task: 'Get dressed', done: false},
+                {icon: '🥣', time: '08:00', task: 'Breakfast', done: false}
+            ],
+            school: [
+                {icon: '📚', time: '09:00', task: 'Learning time', done: false},
+                {icon: '🎨', time: '10:00', task: 'Creative play', done: false},
+                {icon: '🏃', time: '11:00', task: 'Exercise', done: false},
+                {icon: '🍎', time: '12:00', task: 'Lunch', done: false}
+            ],
+            afternoon: [
+                {icon: '😴', time: '13:00', task: 'Rest time', done: false},
+                {icon: '📖', time: '14:00', task: 'Reading', done: false},
+                {icon: '🧩', time: '15:00', task: 'Puzzles', done: false},
+                {icon: '🎮', time: '16:00', task: 'Free play', done: false}
+            ],
+            evening: [
+                {icon: '🍽️', time: '18:00', task: 'Dinner', done: false},
+                {icon: '🛁', time: '19:00', task: 'Bath time', done: false},
+                {icon: '📖', time: '20:00', task: 'Bedtime story', done: false},
+                {icon: '😴', time: '21:00', task: 'Sleep', done: false}
+            ]
+        };
+        
+        function getTasksForDay() {
+            let allTasks = [];
+            if (day % 4 === 1) allTasks = routines.morning;
+            else if (day % 4 === 2) allTasks = routines.school;
+            else if (day % 4 === 3) allTasks = routines.afternoon;
+            else allTasks = routines.evening;
+            
+            // Reset task status for new day
+            return allTasks.map(t => ({...t, done: false}));
+        }
+        
+        function displayTasks() {
+            const tasks = getTasksForDay();
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            tasks.forEach((task, index) => {
+                const taskDiv = document.createElement('div');
+                taskDiv.className = 'task-item';
+                taskDiv.onclick = () => completeTask(taskDiv, index);
+                taskDiv.innerHTML = `
+                    <span class="task-icon">${task.icon}</span>
+                    <span style="flex:1"><strong>${task.time}</strong> - ${task.task}</span>
+                `;
+                taskList.appendChild(taskDiv);
+            });
+            
+            document.getElementById('time').textContent = tasks[0].time;
+            document.getElementById('status').textContent = tasks[0].task + '!';
+            updateStats();
+        }
+        
+        function completeTask(taskDiv, index) {
+            if (!taskDiv.classList.contains('completed')) {
+                taskDiv.classList.add('completed');
+                completedTasks++;
+                updateStats();
+                
+                // Celebration effect
+                createConfetti();
+            }
+        }
+        
+        function createConfetti() {
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+        
+        function nextDay() {
+            day++;
+            completedTasks = 0;
+            displayTasks();
+            createConfetti();
+        }
+        
+        function updateStats() {
+            const tasks = getTasksForDay();
+            document.getElementById('day').textContent = 'Day ' + day;
+            document.getElementById('tasksLeft').textContent = tasks.length - completedTasks;
+        }
+        
+        displayTasks();
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("smart_alarm.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

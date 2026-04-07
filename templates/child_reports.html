@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ child.name }}'s Reports</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 25px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+        }
+        
+        .reports-card {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            height: 300px;
+        }
+        
+        .games-table {
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            padding: 12px;
+        }
+        
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .accuracy-high { background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 20px; }
+        .accuracy-medium { background: #fff3cd; color: #856404; padding: 5px 10px; border-radius: 20px; }
+        .accuracy-low { background: #f8d7da; color: #721c24; padding: 5px 10px; border-radius: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/parent/dashboard" class="back-btn">← Back to Dashboard</a>
+        
+        <div class="reports-card">
+            <h1>📊 {{ child.name }}'s Reports</h1>
+            <p>Detailed progress and analytics</p>
+            
+            <div class="stats-summary">
+                <div class="stat-box">
+                    <div class="stat-number">{{ child.games_played }}</div>
+                    <div>Games Played</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">{{ child.total_correct }}</div>
+                    <div>✅ Correct</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">{{ child.total_wrong }}</div>
+                    <div>❌ Wrong</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-number">{{ child.total_accuracy }}%</div>
+                    <div>📊 Accuracy</div>
+                </div>
+            </div>
+            
+            <div class="charts-row">
+                <div class="chart-container">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="games-table">
+                <h3 style="margin-bottom: 20px;">📋 Detailed Game History</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Game</th>
+                            <th>Plays</th>
+                            <th>✅ Correct</th>
+                            <th>❌ Wrong</th>
+                            <th>📊 Accuracy</th>
+                            <th>📈 Level</th>
+                        </thead>
+                    <tbody>
+                        {% for game, stats in child.game_stats.items() %}
+                        <tr>
+                            <td><strong>{{ game|replace('_', ' ')|title }}</strong></td>
+                            <td>{{ stats.sessions }}</td>
+                            <td style="color: #28a745;">{{ stats.correct }}</td>
+                            <td style="color: #dc3545;">{{ stats.wrong }}</td>
+                            <td>
+                                <span class="{% if stats.accuracy >= 70 %}accuracy-high{% elif stats.accuracy >= 40 %}accuracy-medium{% else %}accuracy-low{% endif %}">
+                                    {{ stats.accuracy }}%
+                                </span>
+                            </td>
+                            <td>Level {{ stats.highest_level }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="recent-sessions" style="margin-top: 30px;">
+                <h3>🕐 Recent Sessions</h3>
+                {% for session in child.recent_sessions %}
+                <div class="session-item" style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee;">
+                    <span>{{ session.date }}</span>
+                    <span><strong>{{ session.game }}</strong></span>
+                    <span style="color: #28a745;">✅ {{ session.correct }}</span>
+                    <span style="color: #dc3545;">❌ {{ session.wrong }}</span>
+                    <span>Level {{ session.level }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const games = [{% for game, stats in child.game_stats.items() %}'{{ game[:12] }}',{% endfor %}];
+        const accuracy = [{% for game, stats in child.game_stats.items() %}{{ stats.accuracy }},{% endfor %}];
+        const correct = [{% for game, stats in child.game_stats.items() %}{{ stats.correct }},{% endfor %}];
+        const wrong = [{% for game, stats in child.game_stats.items() %}{{ stats.wrong }},{% endfor %}];
+        
+        new Chart(document.getElementById('accuracyChart'), {
+            type: 'bar',
+            data: {
+                labels: games,
+                datasets: [{
+                    label: 'Accuracy %',
+                    data: accuracy,
+                    backgroundColor: '#667eea',
+                    borderRadius: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+        
+        new Chart(document.getElementById('progressChart'), {
+            type: 'line',
+            data: {
+                labels: games,
+                datasets: [
+                    { label: 'Correct', data: correct, borderColor: '#28a745', tension: 0.4 },
+                    { label: 'Wrong', data: wrong, borderColor: '#dc3545', tension: 0.4 }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+</body>
+</html>

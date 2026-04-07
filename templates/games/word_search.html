@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Word Search</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            font-size: 1.3em;
+        }
+        .game-area {
+            display: flex;
+            gap: 40px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            gap: 2px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3em;
+            cursor: pointer;
+            background: white;
+        }
+        .cell.selected {
+            background: #ffd700;
+        }
+        .cell.found {
+            background: #90ee90;
+        }
+        .words-list {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .word-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+        .word-item.found {
+            background: #d4edda;
+            text-decoration: line-through;
+        }
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            animation: celebrate 1s ease;
+            display: none;
+        }
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) scale(1.5) rotate(180deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Word Search</h1>
+        
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Found: <span id="found">0/4</span></div>
+            <div>Score: <span id="score">0</span></div>
+        </div>
+        
+        <div class="game-area">
+            <div class="grid" id="grid"></div>
+            <div class="words-list" id="wordsList"></div>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration">🎉 FOUND IT! 🎉</div>
+    
+    <script>
+        let level = 1;
+        let found = 0;
+        let score = 0;
+        let selectedCells = [];
+        
+        const puzzles = [
+            {
+                words: ['CAT', 'DOG'],
+                grid: [
+                    ['C','A','T','D','O','G','B','C','A','T'],
+                    ['D','O','G','C','A','T','D','O','G','D'],
+                    ['B','I','R','D','F','I','S','H','B','E'],
+                    ['F','I','S','H','B','E','A','R','F','I']
+                ]
+            },
+            {
+                words: ['BIRD', 'FISH', 'BEAR'],
+                grid: [
+                    ['B','I','R','D','F','I','S','H','B','E'],
+                    ['A','B','C','D','E','F','G','H','A','R'],
+                    ['B','E','A','R','B','I','R','D','F','I'],
+                    ['F','I','S','H','B','E','A','R','S','H']
+                ]
+            },
+            {
+                words: ['ELEPHANT', 'TIGER', 'ZEBRA'],
+                grid: [
+                    ['E','L','E','P','H','A','N','T','T','I'],
+                    ['T','I','G','E','R','Z','E','B','R','A'],
+                    ['Z','E','B','R','A','E','L','E','P','H'],
+                    ['A','N','T','T','I','G','E','R','Z','E']
+                ]
+            }
+        ];
+        
+        function createGrid() {
+            const puzzle = puzzles[Math.min(level - 1, puzzles.length - 1)];
+            const gridDiv = document.getElementById('grid');
+            gridDiv.innerHTML = '';
+            
+            for(let r = 0; r < 4; r++) {
+                for(let c = 0; c < 10; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.textContent = puzzle.grid[r][c];
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    
+                    cell.onmousedown = () => startSelection(cell);
+                    cell.onmouseover = () => continueSelection(cell);
+                    cell.onmouseup = endSelection;
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+        }
+        
+        function displayWords() {
+            const puzzle = puzzles[Math.min(level - 1, puzzles.length - 1)];
+            const wordsDiv = document.getElementById('wordsList');
+            wordsDiv.innerHTML = '';
+            
+            puzzle.words.forEach(word => {
+                const div = document.createElement('div');
+                div.className = 'word-item';
+                div.id = 'word-' + word;
+                div.textContent = word;
+                wordsDiv.appendChild(div);
+            });
+        }
+        
+        function startSelection(cell) {
+            selectedCells = [cell];
+            cell.classList.add('selected');
+        }
+        
+        function continueSelection(cell) {
+            if (selectedCells.length > 0 && !selectedCells.includes(cell)) {
+                selectedCells.push(cell);
+                cell.classList.add('selected');
+            }
+        }
+        
+        function endSelection() {
+            const puzzle = puzzles[Math.min(level - 1, puzzles.length - 1)];
+            let word = '';
+            selectedCells.forEach(cell => {
+                word += cell.textContent;
+            });
+            
+            if (puzzle.words.includes(word)) {
+                selectedCells.forEach(cell => {
+                    cell.classList.remove('selected');
+                    cell.classList.add('found');
+                });
+                
+                document.getElementById('word-' + word).classList.add('found');
+                found++;
+                score += 20;
+                celebrate();
+                
+                if (found === puzzle.words.length) {
+                    level++;
+                    setTimeout(() => {
+                        createGrid();
+                        displayWords();
+                    }, 2000);
+                }
+            } else {
+                selectedCells.forEach(cell => {
+                    cell.classList.remove('selected');
+                });
+                score = Math.max(0, score - 5);
+            }
+            
+            selectedCells = [];
+            updateStats();
+        }
+        
+        function celebrate() {
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'block';
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 1500);
+        }
+        
+        function updateStats() {
+            const puzzle = puzzles[Math.min(level - 1, puzzles.length - 1)];
+            document.getElementById('level').textContent = level;
+            document.getElementById('found').textContent = found + '/' + puzzle.words.length;
+            document.getElementById('score').textContent = score;
+        }
+        
+        createGrid();
+        displayWords();
+    </script>
+</body>
+</html>

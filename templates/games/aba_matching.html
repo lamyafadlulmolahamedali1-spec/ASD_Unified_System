@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matching Game - Everything in the Universe</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; text-align: center; }
+        .target-box { background: #f0f0f0; border-radius: 30px; padding: 30px; margin: 20px; animation: bounce 2s infinite; }
+        .target-emoji { font-size: 8em; }
+        .options-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 20px; margin: 30px; }
+        .option-card { background: #f0f0f0; border-radius: 20px; padding: 20px; font-size: 3em; cursor: pointer; transition: all 0.3s; border: 4px solid transparent; }
+        .option-card:hover { transform: scale(1.1); background: #e3f2fd; border-color: #4CAF50; }
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+        .confetti { position: fixed; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>🎯 Matching Game</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="target-box">
+                <div class="target-emoji" id="target"></div>
+            </div>
+            <div class="options-grid" id="options"></div>
+        </div>
+    </div>
+    <script>
+        // كل شيء في الكون
+        const allItems = [
+            // حيوانات
+            '🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🦁','🐮','🐷','🐸','🐧','🐦','🐤','🐣','🐥','🦆','🦅','🦉','🦇','🐺','🐗','🐴','🦄','🐝','🐛','🦋','🐌','🐞','🐜','🦟','🦗','🕷️','🦂','🐢','🐍','🦎','🐙','🦑','🦐','🦞','🐠','🐟','🐡','🐬','🐳','🐋','🦈',
+            // فواكه
+            '🍎','🍏','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝','🍅','🍆','🥑','🥦','🥬','🥒','🌶️','🫑','🌽','🥕','🫒','🧄','🧅','🥔',
+            // أكل
+            '🍕','🍔','🍟','🌭','🍿','🧂','🥓','🥚','🍳','🥞','🧇','🥐','🥨','🥖','🥯','🍞','🥪','🌮','🌯','🫔','🥙','🧆','🥗','🍝','🍜','🍲','🍛','🍣','🍱','🥟','🦪','🍤','🍙','🍚','🍘','🍥','🥠','🥮','🍢','🍡','🍧','🍨','🍦','🥧','🧁','🍰','🎂','🍮','🍭','🍬','🍫','🍿',
+            // أدوات
+            '✏️','🖊️','🖋️','✒️','🖌️','🖍️','📏','📐','✂️','📎','🖇️','📌','📍','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🧷','🔗','📰','📑','🔍','🔎','🧮',
+            // مركبات
+            '🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🚚','🚛','🚜','🛵','🏍️','🛺','🚲','🛴','🛹','🚨','🚔','🚍','🚘','🚖','🚡','🚠','🚟','🚃','🚋','🚞','🚝','🚄','🚅','🚈','🚂','🚆','🚇','🚊','🚉',
+            // ملابس
+            '👕','👖','🧣','🧤','🧥','🧦','👗','👘','🥻','🩱','🩲','🩳','👙','👚','👛','👜','👝','🎒','💼','👞','👟','🥿','👠','👡','👢','👑','🧢','⛑️','🎩','🎓',
+            // ألعاب
+            '🧸','🎮','🕹️','🎲','♟️','🎯','🎳','🎪','🎨','🧩','🪀','🪁','🏀','⚽','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🪄','🧿',
+            // حلويات
+            '🍬','🍭','🍫','🍿','🍩','🍪','🧁','🎂','🍰','🥧','🍦','🍨','🍧','🍮','🍡','🍬'
+        ];
+        
+        let level = 1;
+        let score = 0;
+        let correct = 0;
+        
+        function playSound(text) {
+            try {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+        
+        function showConfetti() {
+            for(let i=0; i<50; i++) {
+                let confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.left = Math.random()*100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.color = ['red','blue','green','yellow','orange','purple'][Math.floor(Math.random()*6)];
+                confetti.style.fontSize = (Math.random()*20+10) + 'px';
+                confetti.textContent = ['✨','🎉','⭐','🌟','💫','🎊'][Math.floor(Math.random()*6)];
+                confetti.style.animation = `fall ${Math.random()*2+1}s linear`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+        
+        function newRound() {
+            let target = allItems[Math.floor(Math.random()*allItems.length)];
+            document.getElementById('target').textContent = target;
+            
+            let opts = [target];
+            while(opts.length < 4) {
+                let opt = allItems[Math.floor(Math.random()*allItems.length)];
+                if(!opts.includes(opt)) opts.push(opt);
+            }
+            opts.sort(()=>Math.random()-0.5);
+            
+            document.getElementById('options').innerHTML = opts.map(opt => 
+                `<div class="option-card" onclick="check('${opt}','${target}')">${opt}</div>`
+            ).join('');
+        }
+        
+        function check(opt, target) {
+            if(opt === target) {
+                score += 10 * level;
+                correct++;
+                document.getElementById('score').textContent = score;
+                showReward('✅ Correct! +' + (10*level));
+                playSound('Great job! You did it!');
+                showConfetti();
+                
+                if(correct % 3 === 0) {
+                    level++;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    showReward('🌟 Level Up!');
+                    playSound('Level Up! Amazing!');
+                }
+                setTimeout(newRound, 1000);
+            } else {
+                showReward('❌ Try again');
+                playSound('Try again! You can do it!');
+            }
+        }
+        
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1500);
+        }
+        
+        newRound();
+    </script>
+    <style>
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+    </style>
+</body>
+</html>

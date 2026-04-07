@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speech Pronunciation - Letters & Words</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 { color: #333; }
+        .current-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 50px;
+            border-radius: 30px;
+            margin: 30px 0;
+        }
+        .item-word { font-size: 5em; font-weight: bold; margin-bottom: 20px; }
+        .item-example { font-size: 2em; }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .btn {
+            padding: 15px 35px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .listen-btn { background: #17a2b8; color: white; }
+        .record-btn { background: #ff4757; color: white; }
+        .record-btn.listening { background: #28a745; animation: pulse 1s infinite; }
+        .next-btn { background: #667eea; color: white; }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .result {
+            padding: 15px;
+            border-radius: 20px;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+        .correct { background: #d4edda; color: #155724; }
+        .wrong { background: #f8d7da; color: #721c24; }
+        .back-btn { display: inline-block; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗣️ Speech Pronunciation</h1>
+        <p>Learn to say letters, numbers, and words!</p>
+        
+        <div class="current-item">
+            <div class="item-word" id="word">A</div>
+            <div class="item-example" id="example">Apple 🍎</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn listen-btn" onclick="listen()">🔊 Listen</button>
+            <button class="btn record-btn" id="recordBtn" onclick="startRecording()">🎤 Record</button>
+            <button class="btn next-btn" onclick="nextItem()">➡️ Next</button>
+        </div>
+        
+        <div id="result" class="result"></div>
+        
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('speech_pronunciation');
+        
+        const items = [
+            { word: 'A', example: 'Apple 🍎' },
+            { word: 'B', example: 'Ball ⚽' },
+            { word: 'C', example: 'Cat 🐱' },
+            { word: 'D', example: 'Dog 🐶' },
+            { word: 'E', example: 'Elephant 🐘' },
+            { word: 'F', example: 'Fish 🐟' },
+            { word: 'G', example: 'Goat 🐐' },
+            { word: 'H', example: 'Hat 🧢' },
+            { word: 'I', example: 'Ice cream 🍦' },
+            { word: 'J', example: 'Juice 🥤' },
+            { word: 'K', example: 'Kite 🪁' },
+            { word: 'L', example: 'Lion 🦁' },
+            { word: 'M', example: 'Monkey 🐒' },
+            { word: 'N', example: 'Nest 🪹' },
+            { word: 'O', example: 'Orange 🍊' },
+            { word: 'P', example: 'Panda 🐼' },
+            { word: 'Q', example: 'Queen 👑' },
+            { word: 'R', example: 'Rabbit 🐰' },
+            { word: 'S', example: 'Sun ☀️' },
+            { word: 'T', example: 'Tiger 🐯' },
+            { word: 'U', example: 'Umbrella ☂️' },
+            { word: 'V', example: 'Violin 🎻' },
+            { word: 'W', example: 'Whale 🐋' },
+            { word: 'X', example: 'X-ray 📷' },
+            { word: 'Y', example: 'Yoyo 🪀' },
+            { word: 'Z', example: 'Zebra 🦓' },
+            { word: '1', example: 'One 1️⃣' },
+            { word: '2', example: 'Two 2️⃣' },
+            { word: '3', example: 'Three 3️⃣' },
+            { word: '4', example: 'Four 4️⃣' },
+            { word: '5', example: 'Five 5️⃣' },
+            { word: 'Hello', example: '👋 Hello!' },
+            { word: 'Thank you', example: '🙏 Thank you' },
+            { word: 'Please', example: '🤲 Please' }
+        ];
+        
+        let currentIndex = 0;
+        let recognition = null;
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+        }
+        
+        function updateDisplay() {
+            const item = items[currentIndex];
+            document.getElementById('word').textContent = item.word;
+            document.getElementById('example').textContent = item.example;
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        function listen() {
+            const item = items[currentIndex];
+            const utterance = new SpeechSynthesisUtterance(item.word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7;
+            window.speechSynthesis.speak(utterance);
+        }
+        
+        function startRecording() {
+            if (!recognition) {
+                document.getElementById('result').innerHTML = '⚠️ Speech not supported';
+                return;
+            }
+            
+            const btn = document.getElementById('recordBtn');
+            btn.classList.add('listening');
+            document.getElementById('result').innerHTML = '🎤 Listening... Say the word!';
+            
+            recognition.onresult = function(event) {
+                const spoken = event.results[0][0].transcript.toLowerCase().trim();
+                const target = items[currentIndex].word.toLowerCase();
+                
+                if (spoken === target || spoken.includes(target) || target.includes(spoken)) {
+                    stats.addCorrect();
+                    document.getElementById('result').innerHTML = `✅ Perfect! You said "${spoken}". +10 points`;
+                    document.getElementById('result').className = 'result correct';
+                    setTimeout(nextItem, 1500);
+                } else {
+                    stats.addWrong();
+                    document.getElementById('result').innerHTML = `❌ You said "${spoken}". Try saying "${target}"`;
+                    document.getElementById('result').className = 'result wrong';
+                }
+                btn.classList.remove('listening');
+            };
+            
+            recognition.onerror = function() {
+                document.getElementById('result').innerHTML = '❌ Could not hear. Try again!';
+                btn.classList.remove('listening');
+            };
+            
+            recognition.start();
+        }
+        
+        function nextItem() {
+            currentIndex = (currentIndex + 1) % items.length;
+            updateDisplay();
+            if (currentIndex % 5 === 0) stats.levelUp();
+        }
+        
+        updateDisplay();
+    </script>
+</body>
+</html>

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Math Challenge</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+        }
+        .question {
+            text-align: center;
+            font-size: 3em;
+            margin: 40px 0;
+            padding: 30px;
+            background: #f0f0f0;
+            border-radius: 20px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .option {
+            padding: 20px;
+            font-size: 1.8em;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .option:hover { background: #764ba2; }
+        .feedback { text-align: center; padding: 15px; border-radius: 15px; margin: 20px 0; }
+        .correct { background: #d4edda; color: #155724; }
+        .wrong { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 Math Challenge</h1>
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Correct: <span id="correct">0</span></div>
+            <div>Wrong: <span id="wrong">0</span></div>
+        </div>
+        <div class="question" id="question">5 + 3 = ?</div>
+        <div class="options" id="options"></div>
+        <div class="feedback" id="feedback"></div>
+    </div>
+    
+    <script>
+        let level = 1;
+        let score = 0;
+        let correctCount = 0;
+        let wrongCount = 0;
+        let currentAnswer = 0;
+        
+        const childUsername = '{{ child_username }}';
+        const gameId = 'math_challenge';
+        
+        function saveProgress() {
+            fetch('/api/progress/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    child_username: childUsername,
+                    game_id: gameId,
+                    level: level,
+                    score: score,
+                    correct: correctCount,
+                    wrong: wrongCount
+                })
+            }).catch(e => console.log('Save error:', e));
+        }
+        
+        function generateQuestion() {
+            let num1, num2, answer;
+            num1 = Math.floor(Math.random() * (5 + level)) + 1;
+            num2 = Math.floor(Math.random() * (5 + level)) + 1;
+            
+            if (Math.random() > 0.5) {
+                answer = num1 + num2;
+                document.getElementById('question').textContent = `${num1} + ${num2} = ?`;
+            } else {
+                if (num1 < num2) [num1, num2] = [num2, num1];
+                answer = num1 - num2;
+                document.getElementById('question').textContent = `${num1} - ${num2} = ?`;
+            }
+            return answer;
+        }
+        
+        function displayQuestion() {
+            currentAnswer = generateQuestion();
+            
+            const options = [currentAnswer];
+            while(options.length < 4) {
+                const wrong = currentAnswer + Math.floor(Math.random() * 5) - 2;
+                if (!options.includes(wrong) && wrong > 0) options.push(wrong);
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'option';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(opt);
+                optionsDiv.appendChild(btn);
+            });
+        }
+        
+        function checkAnswer(selected) {
+            const feedback = document.getElementById('feedback');
+            
+            if (selected == currentAnswer) {
+                score += 10 * level;
+                correctCount++;
+                feedback.innerHTML = '✅ Correct! +' + (10 * level) + ' points';
+                feedback.className = 'feedback correct';
+                
+                if (correctCount % 3 === 0) {
+                    level++;
+                    feedback.innerHTML += ' 🎉 Level Up!';
+                }
+            } else {
+                score = Math.max(0, score - 5);
+                wrongCount++;
+                feedback.innerHTML = '❌ Wrong! The answer was ' + currentAnswer;
+                feedback.className = 'feedback wrong';
+            }
+            
+            updateStats();
+            saveProgress();
+            
+            setTimeout(() => {
+                displayQuestion();
+            }, 1500);
+        }
+        
+        function updateStats() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('score').textContent = score;
+            document.getElementById('correct').textContent = correctCount;
+            document.getElementById('wrong').textContent = wrongCount;
+        }
+        
+        displayQuestion();
+    </script>
+</body>
+</html>

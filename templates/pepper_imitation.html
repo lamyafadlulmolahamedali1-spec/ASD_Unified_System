@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imitate Pepper</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #43C6AC, #191654); padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; text-align: center; }
+        .pepper-box { background: linear-gradient(145deg, #667eea, #764ba2); border-radius: 50px; padding: 40px; color: white; }
+        .pepper-emoji { font-size: 8em; animation: dance 2s infinite; }
+        @keyframes dance { 0%,100%{transform:rotate(0)} 25%{transform:rotate(10deg)} 75%{transform:rotate(-10deg)} }
+        .buttons { display: flex; gap: 20px; justify-content: center; margin: 30px; }
+        .btn { padding: 20px 50px; border: none; border-radius: 50px; font-size: 1.5em; cursor: pointer; transition: all 0.3s; }
+        .btn-yes { background: #4CAF50; color: white; }
+        .btn-no { background: #f44336; color: white; }
+        .btn:hover { transform: scale(1.1); }
+        .score-board { background: #4CAF50; color: white; padding: 10px 25px; border-radius: 30px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤸 Imitate Pepper</h1>
+            <span class="score-board" id="score">0</span>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="pepper-box">
+                <div class="pepper-emoji" id="pepper">🤖</div>
+                <h2 id="move">Wave!</h2>
+            </div>
+            <div class="buttons">
+                <button class="btn btn-yes" onclick="respond(true)">✅ I did it!</button>
+                <button class="btn btn-no" onclick="respond(false)">❌ Not yet</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const moves = [
+            {emoji:'👋', text:'Wave!'},
+            {emoji:'👏', text:'Clap!'},
+            {emoji:'👍', text:'Thumbs up!'},
+            {emoji:'✋', text:'High five!'},
+            {emoji:'🫶', text:'Love!'},
+            {emoji:'💪', text:'Strong!'}
+        ];
+        let score = 0;
+        
+        function newMove() {
+            const move = moves[Math.floor(Math.random()*moves.length)];
+            document.getElementById('pepper').textContent = move.emoji;
+            document.getElementById('move').textContent = move.text;
+        }
+        
+        function respond(success) {
+            if(success) {
+                score += 10;
+                document.getElementById('score').textContent = score;
+            }
+            newMove();
+        }
+        
+        newMove();
+        setInterval(newMove, 3000);
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("pepper_imitation.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

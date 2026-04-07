@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coloring Game - 20+ Pictures</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 60px;
+            padding: 40px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 40px;
+        }
+        .game-area {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+        .coloring-area {
+            flex: 2;
+            min-width: 500px;
+            text-align: center;
+        }
+        svg {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+            background: white;
+            border: 4px solid #333;
+            border-radius: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        svg * {
+            cursor: pointer;
+            transition: fill 0.3s;
+        }
+        svg *:hover {
+            filter: brightness(0.9);
+        }
+        .controls {
+            flex: 1;
+            min-width: 250px;
+        }
+        .picture-selector {
+            margin: 30px 0;
+        }
+        select {
+            width: 100%;
+            padding: 20px;
+            border-radius: 40px;
+            font-size: 1.3em;
+            border: 3px solid #667eea;
+        }
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .color-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid #333;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+        .color-btn.selected {
+            border: 6px solid gold;
+            box-shadow: 0 0 20px gold;
+        }
+        .tools {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 30px 0;
+        }
+        .tool-btn {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            animation: confettiFall 4s ease-out forwards;
+            z-index: 9999;
+            border-radius: 50%;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Coloring Game - 20+ Pictures</h1>
+        
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Pictures: <span id="pictureCount">1/20</span></div>
+            <div>Score: <span id="score">0</span></div>
+        </div>
+        
+        <div class="game-area">
+            <div class="coloring-area">
+                <svg viewBox="0 0 400 400" id="coloringSVG"></svg>
+            </div>
+            
+            <div class="controls">
+                <div class="picture-selector">
+                    <select id="pictureSelect" onchange="changePicture()">
+                        <optgroup label="Animals">
+                            <option value="lion">🦁 Lion</option>
+                            <option value="elephant">🐘 Elephant</option>
+                            <option value="giraffe">🦒 Giraffe</option>
+                            <option value="monkey">🐒 Monkey</option>
+                            <option value="zebra">🦓 Zebra</option>
+                            <option value="bear">🐻 Bear</option>
+                            <option value="rabbit">🐰 Rabbit</option>
+                            <option value="fox">🦊 Fox</option>
+                        </optgroup>
+                        <optgroup label="Nature">
+                            <option value="butterfly">🦋 Butterfly</option>
+                            <option value="flower">🌸 Flower</option>
+                            <option value="tree">🌳 Tree</option>
+                            <option value="sun">☀️ Sun</option>
+                            <option value="rainbow">🌈 Rainbow</option>
+                        </optgroup>
+                        <optgroup label="Objects">
+                            <option value="house">🏠 House</option>
+                            <option value="car">🚗 Car</option>
+                            <option value="ball">⚽ Ball</option>
+                            <option value="book">📚 Book</option>
+                            <option value="cake">🍰 Cake</option>
+                        </optgroup>
+                        <optgroup label="Toys">
+                            <option value="teddy">🧸 Teddy Bear</option>
+                            <option value="train">🚂 Train</option>
+                            <option value="doll">🎎 Doll</option>
+                            <option value="blocks">🧩 Blocks</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <h3>Colors</h3>
+                <div class="color-palette" id="palette"></div>
+                
+                <div class="tools">
+                    <button class="tool-btn" onclick="resetColors()">🔄 Reset</button>
+                    <button class="tool-btn" onclick="saveColoring()">💾 Save</button>
+                    <button class="tool-btn" onclick="nextPicture()">⏭️ Next</button>
+                    <button class="tool-btn" onclick="randomColors()">🎲 Random</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let level = 1;
+        let pictureCount = 1;
+        let score = 0;
+        let currentColor = '#ff4757';
+        let autoNext = true;
+        
+        const colors = [
+            '#ff4757', '#ffa502', '#2ed573', '#1e90ff',
+            '#a55eea', '#ff6b81', '#f1c40f', '#3498db',
+            '#e67e22', '#27ae60', '#e74c3c', '#9b59b6',
+            '#00cec9', '#fd79a8', '#6c5ce7', '#fdcb6e'
+        ];
+        
+        const pictures = {
+            lion: `
+                <circle cx="200" cy="150" r="80" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="150" cy="120" r="15" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="250" cy="120" r="15" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="155" cy="115" r="5" fill="black"/>
+                <circle cx="245" cy="115" r="5" fill="black"/>
+                <path d="M180 190 Q200 220, 220 190" fill="none" stroke="black" stroke-width="3"/>
+                <circle cx="110" cy="100" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="290" cy="100" r="25" fill="white" stroke="black" stroke-width="2"/>
+            `,
+            elephant: `
+                <circle cx="200" cy="180" r="100" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="140" cy="140" r="30" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="260" cy="140" r="30" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="150" cy="135" r="5" fill="black"/>
+                <circle cx="250" cy="135" r="5" fill="black"/>
+                <path d="M120 200 L80 220 L120 240" fill="white" stroke="black" stroke-width="3"/>
+                <path d="M280 200 L320 220 L280 240" fill="white" stroke="black" stroke-width="3"/>
+            `,
+            butterfly: `
+                <circle cx="200" cy="150" r="30" fill="white" stroke="black" stroke-width="3"/>
+                <path d="M140 120 Q100 80, 80 120 Q100 160, 140 140" fill="white" stroke="black" stroke-width="2"/>
+                <path d="M260 120 Q300 80, 320 120 Q300 160, 260 140" fill="white" stroke="black" stroke-width="2"/>
+                <path d="M140 180 Q100 220, 80 180 Q100 140, 140 160" fill="white" stroke="black" stroke-width="2"/>
+                <path d="M260 180 Q300 220, 320 180 Q300 140, 260 160" fill="white" stroke="black" stroke-width="2"/>
+            `,
+            house: `
+                <rect x="100" y="150" width="200" height="150" fill="white" stroke="black" stroke-width="3"/>
+                <polygon points="100,150 300,150 200,50" fill="white" stroke="black" stroke-width="3"/>
+                <rect x="160" y="200" width="80" height="100" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="200" cy="250" r="10" fill="white" stroke="black" stroke-width="2"/>
+                <rect x="50" y="180" width="30" height="60" fill="white" stroke="black" stroke-width="2"/>
+                <rect x="320" y="180" width="30" height="60" fill="white" stroke="black" stroke-width="2"/>
+            `,
+            flower: `
+                <circle cx="200" cy="200" r="30" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="140" cy="140" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="260" cy="140" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="140" cy="260" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="260" cy="260" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <path d="M200 300 L200 350" stroke="green" stroke-width="5"/>
+            `,
+            car: `
+                <rect x="50" y="150" width="300" height="100" rx="20" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="120" cy="250" r="40" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="280" cy="250" r="40" fill="white" stroke="black" stroke-width="3"/>
+                <rect x="120" y="100" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+                <rect x="230" y="100" width="50" height="50" fill="white" stroke="black" stroke-width="2"/>
+            `,
+            teddy: `
+                <circle cx="200" cy="150" r="60" fill="white" stroke="black" stroke-width="3"/>
+                <circle cx="150" cy="110" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="250" cy="110" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="160" cy="105" r="5" fill="black"/>
+                <circle cx="240" cy="105" r="5" fill="black"/>
+                <circle cx="200" cy="140" r="10" fill="pink" stroke="black" stroke-width="2"/>
+                <circle cx="180" cy="210" r="25" fill="white" stroke="black" stroke-width="2"/>
+                <circle cx="220" cy="210" r="25" fill="white" stroke="black" stroke-width="2"/>
+            `
+        };
+        
+        function initPalette() {
+            const palette = document.getElementById('palette');
+            palette.innerHTML = '';
+            colors.forEach(color => {
+                const btn = document.createElement('div');
+                btn.className = 'color-btn';
+                btn.style.backgroundColor = color;
+                btn.onclick = () => selectColor(color, btn);
+                palette.appendChild(btn);
+            });
+        }
+        
+        function selectColor(color, btn) {
+            currentColor = color;
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        }
+        
+        function changePicture() {
+            const select = document.getElementById('pictureSelect');
+            const picture = select.value;
+            const svg = document.getElementById('coloringSVG');
+            
+            if (pictures[picture]) {
+                svg.innerHTML = pictures[picture];
+            }
+            
+            pictureCount = parseInt(select.selectedIndex) + 1;
+            document.getElementById('pictureCount').textContent = pictureCount + '/20';
+            
+            // Add click handlers
+            setTimeout(() => {
+                document.querySelectorAll('svg *').forEach(el => {
+                    el.addEventListener('click', function(e) {
+                        this.style.fill = currentColor;
+                        score += 5;
+                        document.getElementById('score').textContent = score;
+                        
+                        if (autoNext && Math.random() > 0.7) {
+                            setTimeout(() => {
+                                nextPicture();
+                            }, 1000);
+                        }
+                    });
+                });
+            }, 100);
+        }
+        
+        function resetColors() {
+            document.querySelectorAll('svg *').forEach(el => {
+                el.style.fill = 'white';
+            });
+        }
+        
+        function saveColoring() {
+            alert('🎨 Picture saved! Well done!');
+            celebrate();
+        }
+        
+        function randomColors() {
+            document.querySelectorAll('svg *').forEach(el => {
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                el.style.fill = randomColor;
+            });
+        }
+        
+        function nextPicture() {
+            const select = document.getElementById('pictureSelect');
+            const nextIndex = (select.selectedIndex + 1) % select.options.length;
+            select.selectedIndex = nextIndex;
+            changePicture();
+            celebrate();
+        }
+        
+        function celebrate() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 50);
+            }
+        }
+        
+        initPalette();
+        changePicture();
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("coloring_game.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

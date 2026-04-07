@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spot Difference - Find the Differences</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #2b5876, #4e4376); padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; }
+        .images-container { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; }
+        .image-box { text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; width: 300px; height: 300px; background: #f0f0f0; padding: 10px; border-radius: 20px; }
+        .pixel { aspect-ratio: 1; background: white; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 2em; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
+        .pixel:hover { transform: scale(1.1); border-color: #4CAF50; }
+        .pixel.found { border: 3px solid #4CAF50; background: #e8f5e8; }
+        .differences-panel { background: #f5f5f5; border-radius: 20px; padding: 20px; margin: 20px; }
+        .differences-list { display: flex; gap: 15px; flex-wrap: wrap; }
+        .difference-tag { background: #4CAF50; color: white; padding: 10px 20px; border-radius: 30px; font-size: 1.2em; animation: popIn 0.3s; }
+        @keyframes popIn { from{transform:scale(0)} to{transform:scale(1)} }
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>🔍 Spot Difference</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="images-container">
+                <div class="image-box">
+                    <h3>Picture A</h3>
+                    <div class="grid" id="gridA"></div>
+                </div>
+                <div class="image-box">
+                    <h3>Picture B</h3>
+                    <div class="grid" id="gridB"></div>
+                </div>
+            </div>
+            <div class="differences-panel">
+                <h3>✅ Found Differences: <span id="foundCount">0</span>/<span id="totalDiffs">3</span></h3>
+                <div class="differences-list" id="differencesList"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const emojis = ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🦁'];
+        let gridA = [], gridB = [], diffs = [], found = [];
+        let level = 1, score = 0, correctCount = 0;
+
+        function playSound(type) {
+            try {
+                let utterances = { correct: ['Found it!','Great!','Perfect!'], levelUp: ['Level Up!','Amazing!'] };
+                let msg = new SpeechSynthesisUtterance(utterances[type][Math.floor(Math.random()*3)]);
+                window.speechSynthesis.speak(msg);
+            } catch(e) {}
+        }
+
+        function newRound() {
+            gridA = [];
+            for(let i=0; i<16; i++) {
+                gridA.push(emojis[Math.floor(Math.random()*emojis.length)]);
+            }
+            
+            gridB = [...gridA];
+            diffs = [];
+            let numDiffs = 3 + Math.floor(level/2);
+            
+            for(let i=0; i<numDiffs; i++) {
+                let pos;
+                do { pos = Math.floor(Math.random()*16); } while(diffs.includes(pos));
+                diffs.push(pos);
+                do { gridB[pos] = emojis[Math.floor(Math.random()*emojis.length)]; }
+                while(gridB[pos] === gridA[pos]);
+            }
+            
+            found = [];
+            document.getElementById('totalDiffs').textContent = diffs.length;
+            document.getElementById('foundCount').textContent = '0';
+            document.getElementById('differencesList').innerHTML = '';
+            render();
+        }
+
+        function render() {
+            document.getElementById('gridA').innerHTML = gridA.map(p => 
+                `<div class="pixel">${p}</div>`
+            ).join('');
+            
+            document.getElementById('gridB').innerHTML = gridB.map((p,i) => 
+                `<div class="pixel ${found.includes(i)?'found':''}" onclick="check(${i})">${p}</div>`
+            ).join('');
+        }
+
+        function check(i) {
+            if(diffs.includes(i) && !found.includes(i)) {
+                found.push(i);
+                document.getElementById('foundCount').textContent = found.length;
+                
+                let tag = document.createElement('div');
+                tag.className = 'difference-tag';
+                tag.textContent = `✨ Difference ${found.length}`;
+                document.getElementById('differencesList').appendChild(tag);
+                
+                score += 20 * level;
+                correctCount++;
+                document.getElementById('score').textContent = score;
+                showReward('✅ Found! +' + (20*level));
+                playSound('correct');
+                
+                if(found.length === diffs.length) {
+                    level++;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    showReward('🌟 Level Up!');
+                    playSound('levelUp');
+                    setTimeout(newRound, 2000);
+                }
+                render();
+            }
+        }
+
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1500);
+        }
+
+        newRound();
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("spot_difference.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

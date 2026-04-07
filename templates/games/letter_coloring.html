@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Letter Coloring - Learn ABC</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #FF9A9E, #FAD0C4); padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; }
+        
+        .letter-selector { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 30px; }
+        .letter-btn { width: 70px; height: 70px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 2em; font-weight: bold; cursor: pointer; transition: all 0.3s; border: 3px solid transparent; }
+        .letter-btn:hover { transform: scale(1.1); background: #4CAF50; color: white; }
+        .letter-btn.active { border-color: #FF9800; background: #e8f5e8; }
+        
+        .word-display { font-size: 3em; text-align: center; margin: 30px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+        
+        .colors { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 30px; }
+        .color-btn { width: 70px; height: 70px; border-radius: 50%; border: 3px solid white; cursor: pointer; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .color-btn:hover { transform: scale(1.2); }
+        .color-btn.selected { border-color: #333; transform: scale(1.1); box-shadow: 0 0 0 3px #FF9800; }
+        
+        canvas { border: 3px solid #ddd; border-radius: 30px; display: block; margin: 20px auto; background: white; cursor: crosshair; box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        
+        .sound-btn { background: #2196F3; color: white; border: none; padding: 20px 40px; border-radius: 60px; font-size: 1.5em; cursor: pointer; transition: all 0.3s; margin: 20px; }
+        .sound-btn:hover { transform: scale(1.1); background: #1976D2; }
+        
+        .word-list { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin: 30px; }
+        .word-card { background: white; border: 3px solid #4CAF50; border-radius: 20px; padding: 15px 30px; font-size: 1.5em; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 15px; }
+        .word-card:hover { transform: scale(1.1); background: #e8f5e8; }
+        
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>🔤 Letter Coloring</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="letter-selector" id="letterSelector"></div>
+            <div class="word-display" id="currentWord">A is for Apple 🍎</div>
+            <div class="colors" id="colorPalette"></div>
+            <canvas id="canvas" width="600" height="400"></canvas>
+            <div style="text-align: center;">
+                <button class="sound-btn" onclick="playLetterSound()">🔊 Hear Letter Sound</button>
+            </div>
+            <div class="word-list" id="wordList"></div>
+        </div>
+    </div>
+    <script>
+        const letters = [
+            { letter: 'A', words: ['Apple', 'Ant', 'Alligator'], emoji: '🍎' },
+            { letter: 'B', words: ['Ball', 'Banana', 'Bird'], emoji: '⚽' },
+            { letter: 'C', words: ['Cat', 'Car', 'Cookie'], emoji: '🐱' },
+            { letter: 'D', words: ['Dog', 'Duck', 'Dinosaur'], emoji: '🐶' },
+            { letter: 'E', words: ['Elephant', 'Egg', 'Engine'], emoji: '🐘' },
+            { letter: 'F', words: ['Fish', 'Frog', 'Flower'], emoji: '🐟' },
+            { letter: 'G', words: ['Giraffe', 'Grapes', 'Guitar'], emoji: '🦒' },
+            { letter: 'H', words: ['Horse', 'House', 'Heart'], emoji: '🐴' },
+            { letter: 'I', words: ['Ice cream', 'Insect', 'Igloo'], emoji: '🍦' },
+            { letter: 'J', words: ['Juice', 'Jelly', 'Jump'], emoji: '🧃' },
+            { letter: 'K', words: ['Kite', 'Koala', 'Kangaroo'], emoji: '🪁' },
+            { letter: 'L', words: ['Lion', 'Leaf', 'Lemon'], emoji: '🦁' },
+            { letter: 'M', words: ['Monkey', 'Moon', 'Milk'], emoji: '🐒' },
+            { letter: 'N', words: ['Nose', 'Nest', 'Nut'], emoji: '👃' },
+            { letter: 'O', words: ['Orange', 'Owl', 'Octopus'], emoji: '🍊' },
+            { letter: 'P', words: ['Panda', 'Pizza', 'Penguin'], emoji: '🐼' },
+            { letter: 'Q', words: ['Queen', 'Quilt', 'Question'], emoji: '👑' },
+            { letter: 'R', words: ['Rabbit', 'Rainbow', 'Robot'], emoji: '🐰' },
+            { letter: 'S', words: ['Sun', 'Star', 'Snake'], emoji: '☀️' },
+            { letter: 'T', words: ['Tree', 'Tiger', 'Train'], emoji: '🌳' },
+            { letter: 'U', words: ['Umbrella', 'Unicorn', 'Up'], emoji: '☂️' },
+            { letter: 'V', words: ['Violin', 'Van', 'Volcano'], emoji: '🎻' },
+            { letter: 'W', words: ['Water', 'Watch', 'Whale'], emoji: '💧' },
+            { letter: 'X', words: ['X-ray', 'Xylophone'], emoji: '🩻' },
+            { letter: 'Y', words: ['Yarn', 'Yak', 'Yogurt'], emoji: '🧶' },
+            { letter: 'Z', words: ['Zebra', 'Zoo', 'Zero'], emoji: '🦓' }
+        ];
+
+        const colors = ['#FF0000','#00FF00','#0000FF','#FFFF00','#FFA500','#800080','#FFC0CB','#8B4513','#000000','#808080'];
+
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let currentLetter = 'A';
+        let currentColor = colors[0];
+        let level = 1;
+        let score = 0;
+        let drawing = false;
+
+        function playSound(text) {
+            try {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+
+        function init() {
+            // Load letters
+            let selector = document.getElementById('letterSelector');
+            letters.forEach(l => {
+                let btn = document.createElement('div');
+                btn.className = `letter-btn ${l.letter === 'A' ? 'active' : ''}`;
+                btn.textContent = l.letter;
+                btn.onclick = () => selectLetter(l.letter);
+                selector.appendChild(btn);
+            });
+
+            // Load colors
+            let palette = document.getElementById('colorPalette');
+            colors.forEach((c, i) => {
+                let btn = document.createElement('div');
+                btn.className = `color-btn ${i === 0 ? 'selected' : ''}`;
+                btn.style.backgroundColor = c;
+                btn.onclick = () => {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    currentColor = c;
+                };
+                palette.appendChild(btn);
+            });
+
+            drawLetter('A');
+            loadWordList('A');
+            setupCanvas();
+            loadProgress();
+        }
+
+        function selectLetter(letter) {
+            currentLetter = letter;
+            document.querySelectorAll('.letter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            drawLetter(letter);
+            loadWordList(letter);
+            playLetterSound();
+        }
+
+        function drawLetter(letter) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.font = 'bold 200px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(letter, canvas.width/2, canvas.height/2);
+        }
+
+        function loadWordList(letter) {
+            let letterData = letters.find(l => l.letter === letter);
+            let list = document.getElementById('wordList');
+            list.innerHTML = '';
+            letterData.words.forEach(word => {
+                let card = document.createElement('div');
+                card.className = 'word-card';
+                card.innerHTML = `${letter} - ${word} ${letterData.emoji}`;
+                card.onclick = () => playSound(word);
+                list.appendChild(card);
+            });
+        }
+
+        function playLetterSound() {
+            let letterData = letters.find(l => l.letter === currentLetter);
+            let word = letterData.words[Math.floor(Math.random() * letterData.words.length)];
+            playSound(`${currentLetter} is for ${word}`);
+        }
+
+        function setupCanvas() {
+            canvas.addEventListener('mousedown', () => drawing = true);
+            canvas.addEventListener('mouseup', () => drawing = false);
+            canvas.addEventListener('mouseleave', () => drawing = false);
+            canvas.addEventListener('mousemove', (e) => {
+                if(!drawing) return;
+                let rect = canvas.getBoundingClientRect();
+                let x = e.clientX - rect.left;
+                let y = e.clientY - rect.top;
+                ctx.fillStyle = currentColor;
+                ctx.beginPath();
+                ctx.arc(x, y, 10, 0, Math.PI*2);
+                ctx.fill();
+                score++;
+                if(score % 50 === 0) {
+                    level++;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    showReward('🌟 Level Up!');
+                }
+                document.getElementById('score').textContent = score;
+            });
+        }
+
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1500);
+        }
+
+        function loadProgress() {
+            fetch('/api/progress/letter_coloring')
+                .then(res => res.json())
+                .then(data => {
+                    level = data.level || 1;
+                    score = data.score || 0;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    document.getElementById('score').textContent = score;
+                });
+        }
+
+        init();
+    </script>
+</body>
+</html>

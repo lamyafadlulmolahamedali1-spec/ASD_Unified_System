@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ABA Sorting</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        .item {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            width: 120px;
+        }
+        .item-icon { font-size: 3em; }
+        .categories {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 40px 0;
+        }
+        .category {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            min-width: 150px;
+            text-align: center;
+        }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 ABA Sorting</h1>
+        <div id="gameArea"></div>
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('aba_sorting');
+        
+        const sortItems = [
+            { name: 'Apple', icon: '🍎', category: 'fruit' },
+            { name: 'Banana', icon: '🍌', category: 'fruit' },
+            { name: 'Carrot', icon: '🥕', category: 'vegetable' },
+            { name: 'Broccoli', icon: '🥦', category: 'vegetable' },
+            { name: 'Dog', icon: '🐶', category: 'animal' },
+            { name: 'Cat', icon: '🐱', category: 'animal' }
+        ];
+        
+        let currentItem = null;
+        let currentIndex = 0;
+        
+        function nextItem() {
+            if (currentIndex >= sortItems.length) {
+                stats.levelUp();
+                setTimeout(() => {
+                    alert('🎉 Great job! New round!');
+                    currentIndex = 0;
+                    nextItem();
+                }, 1000);
+                return;
+            }
+            currentItem = sortItems[currentIndex];
+            document.getElementById('gameArea').innerHTML = `
+                <div class="items">
+                    <div class="item">
+                        <div class="item-icon">${currentItem.icon}</div>
+                        <div>${currentItem.name}</div>
+                    </div>
+                </div>
+                <div class="categories">
+                    <div class="category" onclick="sortItem('fruit')">🍎 Fruits</div>
+                    <div class="category" onclick="sortItem('vegetable')">🥕 Vegetables</div>
+                    <div class="category" onclick="sortItem('animal')">🐶 Animals</div>
+                </div>
+            `;
+        }
+        
+        function sortItem(category) {
+            if (currentItem.category === category) {
+                stats.addCorrect(); // TRACK CORRECT!
+                currentIndex++;
+                nextItem();
+            } else {
+                stats.addWrong(); // TRACK WRONG!
+            }
+        }
+        
+        nextItem();
+    </script>
+</body>
+</html>

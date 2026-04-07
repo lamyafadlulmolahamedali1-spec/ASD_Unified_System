@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Work System - TEACCH Tasks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 50px;
+            padding: 40px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 3em;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .work-areas {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .work-area {
+            background: #f8f9fa;
+            border-radius: 40px;
+            padding: 30px;
+            min-height: 500px;
+        }
+        
+        .area-title {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+            border-bottom: 4px solid #f093fb;
+            padding-bottom: 15px;
+        }
+        
+        .task-card {
+            background: white;
+            border-radius: 25px;
+            padding: 20px;
+            margin: 15px 0;
+            cursor: move;
+            border: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .task-card:hover {
+            transform: translateX(10px);
+            border-color: #f093fb;
+        }
+        
+        .task-card.completed {
+            background: #d4edda;
+            opacity: 0.8;
+        }
+        
+        .task-icon {
+            font-size: 3em;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .task-desc {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .task-points {
+            color: #f093fb;
+            font-weight: bold;
+        }
+        
+        .rewards-area {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 40px;
+            padding: 30px;
+            margin: 40px 0;
+            text-align: center;
+        }
+        
+        .stars {
+            font-size: 3em;
+            color: gold;
+            margin: 20px 0;
+        }
+        
+        .next-level-btn {
+            padding: 20px 60px;
+            background: white;
+            color: #f093fb;
+            border: none;
+            border-radius: 60px;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .next-level-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            background: var(--color);
+            animation: confettiFall 4s ease-out forwards;
+            z-index: 9999;
+            border-radius: 50%;
+        }
+        
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Work System - TEACCH Tasks</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="level">1</div>
+                <div class="stat-label">Level</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="points">0</div>
+                <div class="stat-label">Points</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tasksDone">0</div>
+                <div class="stat-label">Tasks Done</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="badges">0</div>
+                <div class="stat-label">Badges</div>
+            </div>
+        </div>
+        
+        <div class="work-areas">
+            <div class="work-area" id="todo" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="area-title">📋 To Do</div>
+                <div id="todoList"></div>
+            </div>
+            
+            <div class="work-area" id="working" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="area-title">⚡ Working</div>
+                <div id="workingList"></div>
+            </div>
+            
+            <div class="work-area" id="done" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="area-title">✅ Done</div>
+                <div id="doneList"></div>
+            </div>
+        </div>
+        
+        <div class="rewards-area">
+            <div class="stars" id="starsDisplay">⭐⭐⭐</div>
+            <button class="next-level-btn" onclick="nextLevel()">🌟 Next Level</button>
+        </div>
+    </div>
+    
+    <script>
+        let level = 1;
+        let points = 0;
+        let tasksDone = 0;
+        let badges = 0;
+        
+        const tasksByLevel = {
+            1: [
+                {icon: '🧩', name: 'Sort Shapes', desc: 'Put circles in circle box', points: 10},
+                {icon: '🎨', name: 'Match Colors', desc: 'Find same colors', points: 10},
+                {icon: '🔵', name: 'Sort by Size', desc: 'Big vs small', points: 15},
+                {icon: '📚', name: 'Match Letters', desc: 'A goes with A', points: 15}
+            ],
+            2: [
+                {icon: '🧮', name: 'Count to 10', desc: 'Count objects', points: 20},
+                {icon: '📝', name: 'Trace Letters', desc: 'Practice writing', points: 20},
+                {icon: '🧩', name: 'Simple Puzzle', desc: '4-piece puzzle', points: 25},
+                {icon: '🎵', name: 'Follow Rhythm', desc: 'Clap pattern', points: 25}
+            ],
+            3: [
+                {icon: '➕', name: 'Simple Addition', desc: '1+1=2', points: 30},
+                {icon: '📖', name: 'Read Words', desc: 'Cat, dog, bird', points: 30},
+                {icon: '🎨', name: 'Draw Shapes', desc: 'Copy shapes', points: 35},
+                {icon: '🧠', name: 'Memory Game', desc: 'Find pairs', points: 35}
+            ]
+        };
+        
+        function displayTasks() {
+            const tasks = tasksByLevel[Math.min(level, 3)] || tasksByLevel[3];
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+            
+            tasks.forEach((task, index) => {
+                const taskEl = document.createElement('div');
+                taskEl.className = 'task-card';
+                taskEl.draggable = true;
+                taskEl.ondragstart = drag;
+                taskEl.id = 'task' + Date.now() + index;
+                taskEl.innerHTML = `
+                    <div class="task-icon">${task.icon}</div>
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div class="task-desc">${task.desc}</div>
+                        <div class="task-points">+${task.points} pts</div>
+                    </div>
+                `;
+                todoList.appendChild(taskEl);
+            });
+        }
+        
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+        
+        function drag(ev) {
+            ev.dataTransfer.setData('text', ev.target.id);
+        }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            const id = ev.dataTransfer.getData('text');
+            const task = document.getElementById(id);
+            const targetArea = ev.target.closest('.work-area');
+            
+            if (targetArea) {
+                targetArea.querySelector('div:last-child').appendChild(task);
+                
+                if (targetArea.id === 'done' && !task.classList.contains('completed')) {
+                    task.classList.add('completed');
+                    const points = parseInt(task.querySelector('.task-points').textContent);
+                    pointsEarned += points;
+                    tasksDone++;
+                    
+                    if (tasksDone % 5 === 0) {
+                        badges++;
+                    }
+                    
+                    updateStats();
+                    createConfetti();
+                }
+            }
+        }
+        
+        let pointsEarned = 0;
+        
+        function updateStats() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('points').textContent = pointsEarned;
+            document.getElementById('tasksDone').textContent = tasksDone;
+            document.getElementById('badges').textContent = badges;
+            
+            let stars = '';
+            for(let i = 0; i < Math.min(badges + 1, 5); i++) {
+                stars += '⭐';
+            }
+            document.getElementById('starsDisplay').textContent = stars;
+        }
+        
+        function createConfetti() {
+            for(let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 50);
+            }
+        }
+        
+        function nextLevel() {
+            level++;
+            displayTasks();
+            createConfetti();
+        }
+        
+        displayTasks();
+    </script>
+</body>
+</html>

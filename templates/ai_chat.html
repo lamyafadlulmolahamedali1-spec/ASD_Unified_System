@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Chat Assistant - Smart Helper</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <script src="/static/js/pepper-voice.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .chat-box {
+            height: 450px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #fafafa;
+        }
+        .message {
+            margin: 15px 0;
+            padding: 12px 18px;
+            border-radius: 20px;
+            max-width: 80%;
+            animation: fadeIn 0.3s;
+        }
+        .user { background: #667eea; color: white; margin-left: auto; }
+        .ai { background: #f0f0f0; color: #333; margin-right: auto; }
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 30px;
+            font-size: 1em;
+        }
+        button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+        .voice-btn {
+            background: #28a745;
+        }
+        .gemini-btn {
+            display: block;
+            text-align: center;
+            margin: 20px auto;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #4285f4, #ea4335);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: bold;
+            width: 80%;
+        }
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .suggestion {
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: 0.3s;
+        }
+        .suggestion:hover {
+            background: #667eea;
+            color: white;
+        }
+        .back-btn {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #667eea;
+            text-decoration: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 Smart AI Assistant</h1>
+        <div class="subtitle">Ask me anything! I'm here to help you learn and play.</div>
+        
+        <div class="chat-box" id="chatBox">
+            <div class="message ai">👋 Hi! I'm your friendly AI assistant. Ask me about colors, numbers, animals, games, or anything you're curious about!</div>
+        </div>
+        
+        <div class="suggestions" id="suggestions"></div>
+        
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Type your question..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button onclick="sendMessage()">Send</button>
+            <button class="voice-btn" onclick="startVoiceInput()">🎤 Voice</button>
+        </div>
+        
+        <a href="https://gemini.google.com" target="_blank" class="gemini-btn">✨ Try Google Gemini AI (Safe for Kids) ✨</a>
+        
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('ai_chat');
+        
+        // Intelligent responses for common questions
+        const responses = {
+            // Greetings
+            'hello': "Hello! How are you today? 😊",
+            'hi': "Hi there! Nice to meet you! 💕",
+            'hey': "Hey! What would you like to talk about?",
+            'how are you': "I'm doing great! Thank you for asking. How are you feeling?",
+            
+            // Colors
+            'what color is the sky': "The sky is usually blue during the day! But at sunrise and sunset, it can be orange, pink, or red. 🌈",
+            'what color is grass': "Grass is green! Green is a beautiful color that reminds us of nature. 🌿",
+            'what color is the sun': "The sun is yellow and bright! It gives us warmth and light. ☀️",
+            'favorite color': "I love all colors! But rainbow is my favorite because it has many colors! 🌈",
+            
+            // Numbers
+            'count to 10': "Let's count together! 1, 2, 3, 4, 5, 6, 7, 8, 9, 10! Can you count higher? 🔢",
+            'what is 2+2': "2 + 2 = 4! That's correct! Do you want to try another math problem? ➕",
+            'what is 5+3': "5 + 3 = 8! Great job! 🎉",
+            
+            // Animals
+            'what sound does a dog make': "A dog says: Woof! Woof! 🐶",
+            'what sound does a cat make': "A cat says: Meow! Meow! 🐱",
+            'what sound does a cow make': "A cow says: Moo! Moo! 🐮",
+            'favorite animal': "I love all animals! Dogs are friendly, cats are cute, and elephants are so big and gentle! 🐘",
+            
+            // Games
+            'what games can i play': "We have so many games! Memory Cards, Math Challenge, Ball Sort, Coloring Game, and many more! Try them all! 🎮",
+            'how to play memory game': "In Memory Game, you need to find matching pairs! Click on cards to flip them and find the match. It's fun! 🃏",
+            
+            // Feelings
+            'i am happy': "I'm so glad you're happy! Happiness is wonderful! What makes you happy? 😊",
+            'i am sad': "I'm sorry you feel sad. Want to talk about it? Sometimes talking helps. I'm here for you! 🤗",
+            'i am scared': "It's okay to feel scared. Remember, you are brave and strong! Take a deep breath. You can do this! 💪",
+            'i am angry': "It's okay to feel angry sometimes. Take a deep breath and count to 10. Let's calm down together. 🧘",
+            
+            // Learning
+            'what is your name': "My name is Pepper! I'm your friendly AI assistant. What's your name? 🤖",
+            'what do you do': "I help you learn, play games, and answer your questions! I'm here to make learning fun! 📚",
+            'thank you': "You're welcome! I'm happy to help! 💕",
+            'goodbye': "Goodbye! Come back soon to play more games! See you later! 👋",
+            'bye': "Bye bye! Have a wonderful day! 🌟"
+        };
+        
+        function getResponse(message) {
+            const msg = message.toLowerCase().trim();
+            
+            // Check exact matches
+            for (let key in responses) {
+                if (msg === key || msg.includes(key)) {
+                    return responses[key];
+                }
+            }
+            
+            // Check for questions
+            if (msg.includes('what') || msg.includes('why') || msg.includes('how')) {
+                return "That's a great question! I'm still learning. You can ask me about colors, numbers, animals, or games! Or try Google Gemini for more answers! 🌟";
+            }
+            
+            // Check for math
+            if (msg.includes('+') || msg.includes('plus')) {
+                const numbers = msg.match(/\d+/g);
+                if (numbers && numbers.length >= 2) {
+                    const sum = parseInt(numbers[0]) + parseInt(numbers[1]);
+                    return `${numbers[0]} + ${numbers[1]} = ${sum}! Great job! Do you want to try another? 🎉`;
+                }
+            }
+            
+            // Default response
+            return "That's interesting! Tell me more. I love learning with you! You can also try Google Gemini for more answers! 💕";
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            addMessage(message, 'user');
+            stats.addCorrect();
+            
+            setTimeout(() => {
+                const response = getResponse(message);
+                addMessage(response, 'ai');
+                PepperVoice.speak(response);
+            }, 500);
+            
+            input.value = '';
+        }
+        
+        function addMessage(text, sender) {
+            const chatBox = document.getElementById('chatBox');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message ' + sender;
+            msgDiv.textContent = text;
+            chatBox.appendChild(msgDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        function startVoiceInput() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = false;
+                
+                recognition.onstart = () => {
+                    addMessage("🎤 Listening...", 'ai');
+                };
+                
+                recognition.onresult = (event) => {
+                    const spoken = event.results[0][0].transcript;
+                    document.getElementById('userInput').value = spoken;
+                    sendMessage();
+                };
+                
+                recognition.onerror = () => {
+                    addMessage("Sorry, I couldn't hear you. Please try again! 🎤", 'ai');
+                };
+                
+                recognition.start();
+            } else {
+                addMessage("Voice input is not supported in this browser. Try Chrome! 🌟", 'ai');
+            }
+        }
+        
+        // Suggestions
+        const suggestions = [
+            "What color is the sky?", "What sound does a dog make?", "Count to 10",
+            "I am happy", "What games can I play?", "2+2", "What is your name?", "Goodbye"
+        ];
+        
+        function updateSuggestions() {
+            const div = document.getElementById('suggestions');
+            div.innerHTML = '';
+            suggestions.forEach(s => {
+                const btn = document.createElement('div');
+                btn.className = 'suggestion';
+                btn.textContent = s;
+                btn.onclick = () => {
+                    document.getElementById('userInput').value = s;
+                    sendMessage();
+                };
+                div.appendChild(btn);
+            });
+        }
+        
+        updateSuggestions();
+        PepperVoice.speak("Hello! I'm your AI assistant. Ask me anything!");
+    </script>
+</body>
+</html>

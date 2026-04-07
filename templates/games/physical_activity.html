@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physical Activity - Let's Move!</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #FF6B6B, #FF8E53); padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; text-align: center; }
+        
+        .character-box { 
+            background: linear-gradient(145deg, #667eea, #764ba2); 
+            border-radius: 50px; 
+            padding: 40px; 
+            margin: 30px; 
+            color: white; 
+            animation: float 3s infinite;
+        }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+        
+        .character { font-size: 8em; animation: jump 1s infinite; }
+        @keyframes jump { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-50px)} }
+        
+        .exercise-name { font-size: 2.5em; margin: 20px; font-weight: bold; }
+        .exercise-instruction { font-size: 1.5em; opacity: 0.9; }
+        
+        .timer { 
+            font-size: 5em; 
+            font-weight: bold; 
+            color: #4CAF50; 
+            margin: 30px; 
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+        
+        .controls { display: flex; gap: 30px; justify-content: center; margin: 40px; }
+        .control-btn { 
+            padding: 20px 50px; 
+            border: none; 
+            border-radius: 50px; 
+            font-size: 1.5em; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .start-btn { background: #4CAF50; color: white; }
+        .complete-btn { background: #2196F3; color: white; }
+        .control-btn:hover { transform: scale(1.1); }
+        
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>🏃 Physical Activity</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="character-box">
+                <div class="character" id="character">🤸</div>
+                <div class="exercise-name" id="exerciseName">Jumping Jacks</div>
+                <div class="exercise-instruction" id="instruction">Jump 10 times!</div>
+            </div>
+            <div class="timer" id="timer">10</div>
+            <div class="controls">
+                <button class="control-btn start-btn" onclick="startExercise()" id="startBtn">▶️ Start</button>
+                <button class="control-btn complete-btn" onclick="completeExercise()" id="completeBtn" style="display:none;">✅ I Did It!</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const exercises = [
+            { emoji: '🤸', name: 'Jumping Jacks', instruction: 'Jump 10 times!', duration: 10 },
+            { emoji: '🏃', name: 'Running', instruction: 'Run in place for 15 seconds!', duration: 15 },
+            { emoji: '🦘', name: 'Jump', instruction: 'Jump 5 times!', duration: 5 },
+            { emoji: '🧘', name: 'Stretch', instruction: 'Reach for the sky!', duration: 8 },
+            { emoji: '💃', name: 'Dance', instruction: 'Dance like crazy!', duration: 12 },
+            { emoji: '🤸', name: 'Hop', instruction: 'Hop on one foot!', duration: 6 },
+            { emoji: '🏋️', name: 'Strong Arms', instruction: 'Make muscles!', duration: 7 },
+            { emoji: '🧎', name: 'Knees Up', instruction: 'Lift your knees!', duration: 8 },
+            { emoji: '🤾', name: 'Throw', instruction: 'Pretend to throw a ball!', duration: 7 },
+            { emoji: '🚶', name: 'Walk', instruction: 'Walk in place!', duration: 10 }
+        ];
+
+        let level = 1;
+        let score = 0;
+        let currentExercise = null;
+        let timer = 0;
+        let timerInterval = null;
+
+        function playSound(text) {
+            try {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+
+        function showConfetti() {
+            for(let i=0; i<30; i++) {
+                let confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.left = Math.random()*100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.color = ['red','blue','green','yellow','orange','purple'][Math.floor(Math.random()*6)];
+                confetti.style.fontSize = (Math.random()*20+10) + 'px';
+                confetti.style.animation = `fall ${Math.random()*2+1}s linear`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function newExercise() {
+            let index = Math.floor(Math.random() * exercises.length);
+            currentExercise = exercises[index];
+            document.getElementById('character').textContent = currentExercise.emoji;
+            document.getElementById('exerciseName').textContent = currentExercise.name;
+            document.getElementById('instruction').textContent = currentExercise.instruction;
+            document.getElementById('timer').textContent = currentExercise.duration;
+        }
+
+        function startExercise() {
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('completeBtn').style.display = 'inline-block';
+            timer = currentExercise.duration;
+            document.getElementById('timer').textContent = timer;
+            playSound(`Ready? Go! ${currentExercise.instruction}`);
+            timerInterval = setInterval(() => {
+                timer--;
+                document.getElementById('timer').textContent = timer;
+                if(timer === 0) clearInterval(timerInterval);
+            }, 1000);
+        }
+
+        function completeExercise() {
+            clearInterval(timerInterval);
+            let points = 10 * level;
+            score += points;
+            document.getElementById('score').textContent = score;
+            showReward(`✅ Great job! +${points}`);
+            playSound('Excellent work!');
+            showConfetti();
+            if(score % 30 === 0) {
+                level++;
+                document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                showReward('🌟 Level Up!');
+            }
+            document.getElementById('startBtn').style.display = 'inline-block';
+            document.getElementById('completeBtn').style.display = 'none';
+            saveProgress();
+            newExercise();
+        }
+
+        function saveProgress() {
+            fetch('/api/progress/physical_activity', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ level: level, score: score, correct: true })
+            });
+        }
+
+        function loadProgress() {
+            fetch('/api/progress/physical_activity')
+                .then(res => res.json())
+                .then(data => {
+                    level = data.level || 1;
+                    score = data.score || 0;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    document.getElementById('score').textContent = score;
+                });
+        }
+
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1500);
+        }
+
+        loadProgress();
+        newExercise();
+    </script>
+    <style>
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+    </style>
+</body>
+</html>

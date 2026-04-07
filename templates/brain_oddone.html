@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Odd One Out</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .level-info { text-align: center; font-size: 1.5em; margin: 20px; color: #667eea; }
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            margin: 50px 0;
+        }
+        .item-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 4px solid transparent;
+        }
+        .item-card:hover { transform: scale(1.05); }
+        .item-card.correct { background: #d4edda; border-color: #28a745; }
+        .item-card.wrong { background: #f8d7da; border-color: #dc3545; }
+        .item-icon { font-size: 5em; margin-bottom: 15px; }
+        .item-name { font-size: 1.3em; font-weight: bold; }
+        .message { text-align: center; padding: 20px; border-radius: 15px; font-size: 1.3em; margin: 20px 0; }
+        .next-btn {
+            display: block;
+            margin: 30px auto;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3em;
+            cursor: pointer;
+        }
+        .back-btn { display: inline-block; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤔 Odd One Out</h1>
+        <div class="level-info">Level <span id="levelDisplay">1</span></div>
+        <div class="items-grid" id="itemsGrid"></div>
+        <div class="message" id="message"></div>
+        <button class="next-btn" onclick="nextLevel()">🌟 Next Level</button>
+        <div style="text-align: center;"><a href="/" class="back-btn">← Back to Games</a></div>
+    </div>
+    
+    <script>
+        const stats = new GameStats('brain_oddone');
+        let level = 1;
+        let currentOddIndex = 0;
+        let canClick = true;
+        
+        const categories = [
+            {items: ['🐶', '🐱', '🐭', '🚗'], odd: 3},
+            {items: ['🍎', '🍌', '🍊', '📚'], odd: 3},
+            {items: ['🔴', '🔵', '🟢', '🐘'], odd: 3},
+            {items: ['🚗', '🚲', '✈️', '🍕'], odd: 3},
+            {items: ['🧸', '🎮', '🚂', '🌳'], odd: 3}
+        ];
+        
+        function generateLevel() {
+            const category = categories[Math.floor(Math.random() * categories.length)];
+            const items = [...category.items];
+            currentOddIndex = category.odd;
+            
+            const grid = document.getElementById('itemsGrid');
+            grid.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.onclick = () => checkAnswer(index);
+                card.innerHTML = `<div class="item-icon">${item}</div><div class="item-name">Item ${index + 1}</div>`;
+                grid.appendChild(card);
+            });
+            
+            document.getElementById('message').innerHTML = 'Find the odd one out!';
+            document.getElementById('levelDisplay').textContent = level;
+            canClick = true;
+        }
+        
+        function checkAnswer(index) {
+            if (!canClick) return;
+            const cards = document.querySelectorAll('.item-card');
+            const message = document.getElementById('message');
+            
+            if (index === currentOddIndex) {
+                cards[index].classList.add('correct');
+                message.innerHTML = '✅ Correct! +10 points';
+                message.style.background = '#d4edda';
+                message.style.color = '#155724';
+                stats.addCorrect();  // TRACK CORRECT!
+                canClick = false;
+                setTimeout(() => { level++; generateLevel(); }, 1500);
+            } else {
+                cards[index].classList.add('wrong');
+                cards[currentOddIndex].classList.add('correct');
+                message.innerHTML = '❌ Wrong! -5 points';
+                message.style.background = '#f8d7da';
+                message.style.color = '#721c24';
+                stats.addWrong();  // TRACK WRONG!
+                canClick = false;
+                setTimeout(() => { level++; generateLevel(); }, 2000);
+            }
+        }
+        
+        function nextLevel() { level++; generateLevel(); }
+        generateLevel();
+    </script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

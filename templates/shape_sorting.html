@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shape Sorting</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .shapes-area {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 40px 0;
+            min-height: 150px;
+        }
+        .shape {
+            cursor: move;
+            transition: 0.3s;
+        }
+        .shape:hover {
+            transform: scale(1.1);
+        }
+        .drop-zones {
+            display: flex;
+            justify-content: space-around;
+            margin: 50px 0;
+        }
+        .zone {
+            width: 180px;
+            height: 180px;
+            border: 3px dashed #1e3c72;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+        }
+        .zone.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        .zone-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1e3c72;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            font-size: 1.3em;
+        }
+        .message {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.3em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⭐ Shape Sorting</h1>
+        
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Sorted: <span id="sorted">0/5</span></div>
+        </div>
+        
+        <div class="shapes-area" id="shapesArea"></div>
+        
+        <div class="drop-zones">
+            <div class="zone" id="zoneCircle" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="zone-name">⬤ Circle</div>
+                <div id="circleDrop"></div>
+            </div>
+            <div class="zone" id="zoneSquare" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="zone-name">◼ Square</div>
+                <div id="squareDrop"></div>
+            </div>
+            <div class="zone" id="zoneTriangle" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="zone-name">▲ Triangle</div>
+                <div id="triangleDrop"></div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+    
+    <script>
+        let level = 1;
+        let score = 0;
+        let sorted = 0;
+        
+        function createShapes() {
+            const shapesArea = document.getElementById('shapesArea');
+            shapesArea.innerHTML = '';
+            
+            const types = ['circle', 'square', 'triangle'];
+            for(let i = 0; i < 5 + level; i++) {
+                const type = types[Math.floor(Math.random() * types.length)];
+                const shape = document.createElement('div');
+                shape.className = 'shape';
+                shape.draggable = true;
+                shape.ondragstart = drag;
+                shape.setAttribute('data-type', type);
+                shape.id = 'shape' + i;
+                
+                if(type === 'circle') {
+                    shape.innerHTML = '<svg width="60" height="60"><circle cx="30" cy="30" r="25" fill="#1e3c72"/></svg>';
+                } else if(type === 'square') {
+                    shape.innerHTML = '<svg width="60" height="60"><rect x="10" y="10" width="40" height="40" fill="#2a5298"/></svg>';
+                } else {
+                    shape.innerHTML = '<svg width="60" height="60"><polygon points="30,5 55,50 5,50" fill="#ff6b6b"/></svg>';
+                }
+                
+                shapesArea.appendChild(shape);
+            }
+        }
+        
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+        
+        function drag(ev) {
+            ev.dataTransfer.setData('text', ev.target.id);
+        }
+        
+        function drop(ev) {
+            ev.preventDefault();
+            const id = ev.dataTransfer.getData('text');
+            const shape = document.getElementById(id);
+            const type = shape.getAttribute('data-type');
+            const zoneId = ev.target.closest('.zone').id;
+            
+            let correct = false;
+            if(zoneId === 'zoneCircle' && type === 'circle') correct = true;
+            if(zoneId === 'zoneSquare' && type === 'square') correct = true;
+            if(zoneId === 'zoneTriangle' && type === 'triangle') correct = true;
+            
+            if(correct) {
+                shape.remove();
+                score += 10;
+                sorted++;
+                document.getElementById('message').innerHTML = '✅ Correct! Well done!';
+                
+                if(sorted >= 5 + level) {
+                    level++;
+                    sorted = 0;
+                    createShapes();
+                    document.getElementById('message').innerHTML = '🎉 Level Up!';
+                }
+            } else {
+                score = Math.max(0, score - 5);
+                document.getElementById('message').innerHTML = '❌ Wrong place! Try again.';
+            }
+            
+            updateDisplay();
+        }
+        
+        function updateDisplay() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('score').textContent = score;
+            document.getElementById('sorted').textContent = sorted + '/' + (5 + level);
+        }
+        
+        createShapes();
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("shape_sorting.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

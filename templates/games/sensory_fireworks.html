@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gentle Fireworks - Calming Light Show</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #141E30, #243B55); padding: 20px; margin: 0; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: rgba(255,255,255,0.1); border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); color: white; }
+        .game-area { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 30px; backdrop-filter: blur(10px); }
+        
+        .fireworks-canvas { width: 100%; height: 600px; background: rgba(0,0,0,0.3); border-radius: 30px; cursor: crosshair; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        
+        .controls { display: flex; gap: 20px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+        .color-btn { width: 60px; height: 60px; border-radius: 50%; border: 3px solid white; cursor: pointer; transition: all 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .color-btn:hover { transform: scale(1.2); }
+        .color-btn.selected { border-color: #FFD700; transform: scale(1.1); box-shadow: 0 0 20px currentColor; }
+        
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>🎆 Gentle Fireworks</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+
+        <div class="game-area">
+            <canvas id="fireworksCanvas" class="fireworks-canvas"></canvas>
+            
+            <div class="controls" id="colorControls">
+                <div class="color-btn" style="background: #FF0000;" onclick="setColor('#FF0000')"></div>
+                <div class="color-btn" style="background: #00FF00;" onclick="setColor('#00FF00')"></div>
+                <div class="color-btn" style="background: #0000FF;" onclick="setColor('#0000FF')"></div>
+                <div class="color-btn" style="background: #FFFF00;" onclick="setColor('#FFFF00')"></div>
+                <div class="color-btn" style="background: #FF00FF;" onclick="setColor('#FF00FF')"></div>
+                <div class="color-btn" style="background: #00FFFF;" onclick="setColor('#00FFFF')"></div>
+                <div class="color-btn" style="background: #FFA500;" onclick="setColor('#FFA500')"></div>
+                <div class="color-btn" style="background: #FF1493;" onclick="setColor('#FF1493')"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let level = 1;
+        let score = 0;
+        let currentColor = '#FF0000';
+        let particles = [];
+        let animationFrame;
+
+        function playSound(text) {
+            try {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+
+        function showConfetti() {
+            for(let i=0; i<20; i++) {
+                let confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.left = Math.random()*100 + '%';
+                confetti.style.top = '-10px';
+                confetti.style.color = ['red','blue','green','yellow','orange','purple'][Math.floor(Math.random()*6)];
+                confetti.style.fontSize = '20px';
+                confetti.textContent = ['✨','🎆','🎇','✨'][Math.floor(Math.random()*4)];
+                confetti.style.animation = `fall ${Math.random()*2+1}s linear`;
+                confetti.style.zIndex = '9999';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+
+        function saveProgress() {
+            fetch('/api/progress/sensory_fireworks', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ level: level, score: score, correct: true })
+            });
+        }
+
+        function loadProgress() {
+            fetch('/api/progress/sensory_fireworks')
+                .then(res => res.json())
+                .then(data => {
+                    level = data.level || 1;
+                    score = data.score || 0;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    document.getElementById('score').textContent = score;
+                })
+                .catch(() => {});
+        }
+
+        function setColor(color) {
+            currentColor = color;
+            document.querySelectorAll('.color-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        let canvas = document.getElementById('fireworksCanvas');
+        let ctx = canvas.getContext('2d');
+        
+        function resizeCanvas() {
+            canvas.width = canvas.clientWidth;
+            canvas.height = canvas.clientHeight;
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        canvas.addEventListener('click', (e) => {
+            let rect = canvas.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            let particleCount = 20 + (level * 2);
+            
+            for (let i = 0; i < particleCount; i++) {
+                let angle = (i / particleCount) * Math.PI * 2;
+                let speed = 2 + Math.random() * 4;
+                
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1,
+                    color: currentColor,
+                    size: 3 + Math.random() * 4
+                });
+            }
+            
+            score += 10 * level;
+            document.getElementById('score').textContent = score;
+            playSound('Beautiful fireworks!');
+            
+            if (Math.random() < 0.1) {
+                level++;
+                document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                showReward('🌟 Level Up!');
+                playSound('Level Up! Amazing!');
+                showConfetti();
+            }
+            
+            saveProgress();
+        });
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            particles = particles.filter(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05;
+                p.vx *= 0.99;
+                p.vy *= 0.99;
+                p.life -= 0.005;
+                
+                if (p.life > 0) {
+                    ctx.save();
+                    ctx.globalAlpha = p.life;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                    ctx.restore();
+                    return true;
+                }
+                return false;
+            });
+            
+            animationFrame = requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        function showReward(message) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = message;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1500);
+        }
+
+        loadProgress();
+    </script>
+    <style>
+        @keyframes fall {
+            to { transform: translateY(100vh); }
+        }
+    </style>
+</body>
+</html>

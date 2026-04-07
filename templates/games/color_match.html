@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Color Match</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .game-area {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .target-color {
+            width: 250px;
+            height: 250px;
+            border-radius: 30px;
+            margin: 20px auto;
+            border: 5px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .color-name {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 20px 0;
+            color: #1e3c72;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 600px;
+            margin: 30px auto;
+        }
+        .color-option {
+            height: 120px;
+            border-radius: 20px;
+            cursor: pointer;
+            border: 4px solid transparent;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        .color-option:hover {
+            transform: scale(1.05);
+            border-color: #333;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            font-size: 1.3em;
+        }
+        .feedback {
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 1.3em;
+            margin: 20px 0;
+        }
+        .correct { background: #d4edda; color: #155724; }
+        .wrong { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Color Match</h1>
+        
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Score: <span id="score">0</span></div>
+            <div>Correct: <span id="correct">0</span></div>
+        </div>
+        
+        <div class="game-area">
+            <div class="target-color" id="targetColor"></div>
+            <div class="color-name" id="colorName">Red</div>
+            
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+    </div>
+    
+    <script>
+        const colors = [
+            {name: 'Red', code: '#ff4757'},
+            {name: 'Blue', code: '#1e90ff'},
+            {name: 'Green', code: '#2ed573'},
+            {name: 'Yellow', code: '#ffa502'},
+            {name: 'Purple', code: '#a55eea'},
+            {name: 'Orange', code: '#ff6b81'},
+            {name: 'Pink', code: '#ff7b9c'},
+            {name: 'Brown', code: '#8B4513'}
+        ];
+        
+        let level = 1;
+        let score = 0;
+        let correct = 0;
+        let currentColor = null;
+        
+        function nextRound() {
+            currentColor = colors[Math.floor(Math.random() * colors.length)];
+            document.getElementById('targetColor').style.backgroundColor = currentColor.code;
+            document.getElementById('colorName').textContent = currentColor.name;
+            
+            const options = [currentColor];
+            while(options.length < 4) {
+                const random = colors[Math.floor(Math.random() * colors.length)];
+                if (!options.includes(random)) {
+                    options.push(random);
+                }
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            options.forEach(color => {
+                const div = document.createElement('div');
+                div.className = 'color-option';
+                div.style.backgroundColor = color.code;
+                div.textContent = color.name;
+                div.onclick = () => checkAnswer(color);
+                optionsDiv.appendChild(div);
+            });
+        }
+        
+        function checkAnswer(selected) {
+            const feedback = document.getElementById('feedback');
+            
+            if (selected.name === currentColor.name) {
+                score += 10;
+                correct++;
+                feedback.innerHTML = '✅ Correct! This is ' + currentColor.name + '!';
+                feedback.className = 'feedback correct';
+                
+                if (correct % 5 === 0) {
+                    level++;
+                }
+            } else {
+                score = Math.max(0, score - 5);
+                feedback.innerHTML = '❌ Wrong! This is ' + selected.name + ', not ' + currentColor.name;
+                feedback.className = 'feedback wrong';
+            }
+            
+            updateDisplay();
+            setTimeout(nextRound, 1500);
+        }
+        
+        function updateDisplay() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('score').textContent = score;
+            document.getElementById('correct').textContent = correct;
+        }
+        
+        nextRound();
+    </script>
+</body>
+</html>

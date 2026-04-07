@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autimate - Daily Tasks</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <script src="/static/js/pepper-voice.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .task {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .task.completed { background: #d4edda; text-decoration: line-through; }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 Autimate - Daily Tasks</h1>
+        <div id="tasks"></div>
+        <a href="/" class="back-btn">← Back</a>
+    </div>
+    <script>
+        const stats = new GameStats('autimate');
+        let tasks = ['Brush teeth', 'Make bed', 'Eat breakfast', 'Get dressed', 'Pack bag'].map((n,i)=>({name:n,done:false}));
+        
+        function complete(i) {
+            if(!tasks[i].done){
+                tasks[i].done=true;
+                stats.addCorrect();
+                PepperVoice.speak(`Great! ${tasks[i].name} done!`);
+                if(tasks.every(t=>t.done)) {
+                    stats.levelUp();
+                    PepperVoice.speak("Amazing! All tasks completed!");
+                    setTimeout(()=>tasks.forEach(t=>t.done=false),1500);
+                }
+                render();
+            }
+        }
+        function render(){
+            const container=document.getElementById('tasks');
+            container.innerHTML='';
+            tasks.forEach((t,i)=>{
+                const div=document.createElement('div');
+                div.className='task'+(t.done?' completed':'');
+                div.innerHTML=`<span>${t.name}</span><span>${t.done?'✅':'⬜'}</span>`;
+                div.onclick=()=>complete(i);
+                container.appendChild(div);
+            });
+        }
+        PepperVoice.speak("Let's complete our daily tasks!");
+        render();
+    </script>
+</body>
+</html>

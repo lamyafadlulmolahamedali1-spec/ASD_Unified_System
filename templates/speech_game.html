@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Speech Recognition - Practice Speaking</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 40px;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 { color: #333; }
+        .word-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 40px;
+            border-radius: 30px;
+            margin: 30px 0;
+            font-size: 4em;
+        }
+        .microphone-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            font-size: 4em;
+            cursor: pointer;
+            margin: 20px auto;
+            transition: 0.3s;
+        }
+        .microphone-btn.listening {
+            background: #28a745;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .result {
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+        .correct { background: #d4edda; color: #155724; }
+        .wrong { background: #f8d7da; color: #721c24; }
+        .listen-btn {
+            padding: 12px 30px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .back-btn { display: inline-block; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Speech Recognition Game</h1>
+        <p>Listen to the word, then say it!</p>
+        
+        <div class="word-card" id="word">Apple</div>
+        
+        <button class="listen-btn" onclick="listenWord()">🔊 Listen to the word</button>
+        
+        <button class="microphone-btn" id="micBtn" onclick="startListening()">🎤</button>
+        
+        <div id="result" class="result"></div>
+        
+        <div>
+            <button onclick="nextWord()" style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 30px; cursor: pointer; margin: 10px;">Next Word</button>
+        </div>
+        
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('speech_game');
+        
+        const words = [
+            'Apple', 'Ball', 'Cat', 'Dog', 'Fish', 'Bird', 'Sun', 'Star', 'Moon', 'Car',
+            'House', 'Tree', 'Flower', 'Happy', 'Sad', 'Big', 'Small', 'Red', 'Blue', 'Green',
+            'Hello', 'Thank you', 'Please', 'Good', 'Yes', 'No', 'Mother', 'Father', 'Brother', 'Sister'
+        ];
+        
+        let currentWord = '';
+        let recognition = null;
+        
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+        } else {
+            document.getElementById('micBtn').disabled = true;
+            document.getElementById('result').innerHTML = '⚠️ Speech recognition not supported. Try Chrome!';
+        }
+        
+        function listenWord() {
+            const utterance = new SpeechSynthesisUtterance(currentWord);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.7;
+            window.speechSynthesis.speak(utterance);
+        }
+        
+        function startListening() {
+            if (!recognition) return;
+            
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.add('listening');
+            document.getElementById('result').innerHTML = '🎤 Listening... Say the word!';
+            
+            recognition.onresult = function(event) {
+                const spoken = event.results[0][0].transcript.toLowerCase().trim();
+                const target = currentWord.toLowerCase();
+                
+                if (spoken === target || spoken.includes(target) || target.includes(spoken)) {
+                    stats.addCorrect();
+                    document.getElementById('result').innerHTML = `✅ Excellent! You said "${spoken}". Correct! +10 points`;
+                    document.getElementById('result').className = 'result correct';
+                    setTimeout(nextWord, 2000);
+                } else {
+                    stats.addWrong();
+                    document.getElementById('result').innerHTML = `❌ You said "${spoken}". Try saying "${currentWord}"`;
+                    document.getElementById('result').className = 'result wrong';
+                }
+                micBtn.classList.remove('listening');
+            };
+            
+            recognition.onerror = function() {
+                document.getElementById('result').innerHTML = '❌ Could not hear. Try again!';
+                micBtn.classList.remove('listening');
+            };
+            
+            recognition.start();
+        }
+        
+        function nextWord() {
+            currentWord = words[Math.floor(Math.random() * words.length)];
+            document.getElementById('word').textContent = currentWord;
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        nextWord();
+    </script>
+</body>
+</html>

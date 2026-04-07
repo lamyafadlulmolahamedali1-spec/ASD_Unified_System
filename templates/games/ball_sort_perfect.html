@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ball Sort</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 20px;
+        }
+        .tubes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 40px 0;
+        }
+        .tube {
+            width: 100px;
+            height: 350px;
+            border: 4px solid #333;
+            border-radius: 0 0 30px 30px;
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: center;
+            background: #f0f0f0;
+            cursor: pointer;
+        }
+        .tube.selected { border-color: gold; }
+        .ball {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            margin: 3px 0;
+        }
+        .ball.red { background: #ff4757; }
+        .ball.blue { background: #1e90ff; }
+        .ball.green { background: #2ed573; }
+        .ball.yellow { background: #ffa502; }
+        button {
+            padding: 10px 25px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Ball Sort</h1>
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Moves: <span id="moves">0</span></div>
+            <div>Score: <span id="score">0</span></div>
+        </div>
+        <div class="tubes" id="tubes"></div>
+        <div style="text-align: center;"><button onclick="newGame()">New Game</button></div>
+    </div>
+    
+    <script>
+        let level = 1;
+        let moves = 0;
+        let score = 0;
+        let tubes = [];
+        let selected = null;
+        
+        const childUsername = '{{ child_username }}';
+        const gameId = 'ball_sort_perfect';
+        
+        function saveProgress() {
+            fetch('/api/progress/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    child_username: childUsername,
+                    game_id: gameId,
+                    level: level,
+                    score: score,
+                    correct: moves,
+                    wrong: 0
+                })
+            }).catch(e => console.log('Error:', e));
+        }
+        
+        function initLevel() {
+            if (level === 1) {
+                tubes = [['red','red','blue'], ['blue','blue','red'], []];
+            } else if (level === 2) {
+                tubes = [['red','red','blue','blue'], ['blue','blue','red','red'], [], []];
+            } else if (level === 3) {
+                tubes = [['red','red','green','blue'], ['blue','blue','green','red'], ['green','green','red','blue'], []];
+            } else {
+                tubes = [['red','red','blue','green'], ['blue','blue','green','red'], ['green','green','red','blue'], ['yellow','yellow','red','blue'], []];
+            }
+            render();
+        }
+        
+        function render() {
+            const container = document.getElementById('tubes');
+            container.innerHTML = '';
+            tubes.forEach((tube, i) => {
+                const tubeDiv = document.createElement('div');
+                tubeDiv.className = 'tube' + (selected === i ? ' selected' : '');
+                tubeDiv.onclick = () => selectTube(i);
+                tube.forEach(ball => {
+                    const ballDiv = document.createElement('div');
+                    ballDiv.className = 'ball ' + ball;
+                    tubeDiv.appendChild(ballDiv);
+                });
+                for(let j = tube.length; j < 4; j++) {
+                    const empty = document.createElement('div');
+                    empty.style.height = '75px';
+                    empty.style.width = '75px';
+                    tubeDiv.appendChild(empty);
+                }
+                container.appendChild(tubeDiv);
+            });
+        }
+        
+        function selectTube(i) {
+            if (selected === null) {
+                if (tubes[i].length > 0) selected = i;
+            } else {
+                if (selected !== i && tubes[i].length < 4) {
+                    moveBall(selected, i);
+                }
+                selected = null;
+            }
+            render();
+        }
+        
+        function moveBall(from, to) {
+            const ball = tubes[from][tubes[from].length - 1];
+            if (tubes[to].length > 0) {
+                const top = tubes[to][tubes[to].length - 1];
+                if (top !== ball) return;
+            }
+            tubes[from].pop();
+            tubes[to].push(ball);
+            moves++;
+            score += 10;
+            updateStats();
+            checkWin();
+            saveProgress();
+        }
+        
+        function checkWin() {
+            let win = true;
+            tubes.forEach(tube => {
+                if (tube.length > 0) {
+                    const first = tube[0];
+                    if (!tube.every(b => b === first)) win = false;
+                }
+            });
+            if (win) {
+                setTimeout(() => {
+                    level++;
+                    initLevel();
+                    updateStats();
+                }, 1000);
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('moves').textContent = moves;
+            document.getElementById('score').textContent = score;
+        }
+        
+        function newGame() {
+            level = 1;
+            moves = 0;
+            score = 0;
+            initLevel();
+        }
+        
+        initLevel();
+    </script>
+</body>
+</html>

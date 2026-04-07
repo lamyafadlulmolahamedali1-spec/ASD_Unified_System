@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Rain Game - Pepper</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #1a2980, #26a0da);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .game-container {
+            background: rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        canvas {
+            background: rgba(0,0,0,0.2);
+            border-radius: 20px;
+            display: block;
+            cursor: pointer;
+        }
+        .info {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+        }
+        .score {
+            font-size: 36px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.5);
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 50px;
+        }
+        button {
+            background: #ffd700;
+            border: none;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            margin-top: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { transform: scale(1.05); }
+        .message {
+            font-size: 20px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="700" height="450"></canvas>
+        <div class="info">
+            <div class="score">💧 Score: <span id="score">0</span></div>
+            <div class="message" id="message">Click on the raindrops! ☔</div>
+            <button onclick="startGame()">🎮 New Game</button>
+        </div>
+    </div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let raindrops = [];
+        let score = 0;
+        
+        class Raindrop {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.radius = 6 + Math.random() * 8;
+                this.speed = 1 + Math.random() * 4;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#4facfe';
+                ctx.fill();
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(this.x-2, this.y-2, this.radius*0.3, 0, Math.PI*2);
+                ctx.fill();
+            }
+            update() { this.y += this.speed; }
+            isClicked(mx, my) {
+                const dx = this.x - mx, dy = this.y - my;
+                return Math.sqrt(dx*dx + dy*dy) < this.radius;
+            }
+        }
+        
+        function initGame() {
+            raindrops = [];
+            for(let i = 0; i < 20; i++) raindrops.push(new Raindrop());
+        }
+        
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for(let drop of raindrops) {
+                drop.draw();
+                drop.update();
+                if(drop.y - drop.radius > canvas.height) {
+                    drop.y = -drop.radius;
+                    drop.x = Math.random() * canvas.width;
+                }
+            }
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText('Click on raindrops to collect points!', 20, 40);
+        }
+        
+        function handleClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let mx = (e.clientX - rect.left) * scaleX;
+            let my = (e.clientY - rect.top) * scaleY;
+            
+            for(let i = raindrops.length-1; i >= 0; i--) {
+                if(raindrops[i].isClicked(mx, my)) {
+                    score += 10;
+                    document.getElementById('score').innerText = score;
+                    raindrops.splice(i, 1);
+                    raindrops.push(new Raindrop());
+                    break;
+                }
+            }
+        }
+        
+        function startGame() { score = 0; document.getElementById('score').innerText = score; initGame(); }
+        
+        canvas.addEventListener('click', handleClick);
+        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleClick(e.touches[0]); });
+        
+        initGame();
+        setInterval(draw, 30);
+    </script>
+</body>
+</html>

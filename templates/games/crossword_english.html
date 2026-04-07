@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crossword Puzzle</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .crossword-area {
+            display: flex;
+            gap: 40px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .puzzle-section {
+            flex: 2;
+        }
+        .clues-section {
+            flex: 1;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 60px);
+            gap: 2px;
+            justify-content: center;
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .cell input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 1.5em;
+            border: none;
+            outline: none;
+            background: transparent;
+        }
+        .cell.black {
+            background: #333;
+        }
+        .clue-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+        }
+        .clue-item:hover {
+            background: #667eea;
+            color: white;
+        }
+        .clue-icon {
+            font-size: 1.5em;
+        }
+        .clue-text {
+            flex: 1;
+        }
+        .clue-length {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .next-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔤 Crossword Puzzle</h1>
+        
+        <div class="crossword-area">
+            <div class="puzzle-section">
+                <div class="grid" id="grid"></div>
+            </div>
+            <div class="clues-section">
+                <h3>📝 Clues</h3>
+                <div id="clues"></div>
+                <button class="next-btn" onclick="nextPuzzle()">Next Puzzle</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentPuzzle = 0;
+        
+        const puzzles = [
+            {
+                name: 'Animals',
+                grid: [
+                    ['C', 'A', 'T', '', ''],
+                    ['', '', 'O', '', ''],
+                    ['', '', 'W', '', ''],
+                    ['D', 'O', 'G', '', ''],
+                    ['', '', '', '', '']
+                ],
+                clues: [
+                    {icon: '🐱', text: 'Animal that says meow', length: 3, answer: 'CAT'},
+                    {icon: '🐶', text: 'Animal that says woof', length: 3, answer: 'DOG'},
+                    {icon: '🐮', text: 'Animal that says moo', length: 3, answer: 'COW'}
+                ]
+            },
+            {
+                name: 'Colors',
+                grid: [
+                    ['R', 'E', 'D', '', ''],
+                    ['', '', '', '', ''],
+                    ['B', 'L', 'U', 'E', ''],
+                    ['', '', '', '', ''],
+                    ['', '', '', '', '']
+                ],
+                clues: [
+                    {icon: '🍎', text: 'Color of apple', length: 3, answer: 'RED'},
+                    {icon: '🌌', text: 'Color of sky', length: 4, answer: 'BLUE'},
+                    {icon: '🌿', text: 'Color of grass', length: 5, answer: 'GREEN'}
+                ]
+            }
+        ];
+        
+        function createGrid() {
+            const puzzle = puzzles[currentPuzzle];
+            const gridDiv = document.getElementById('grid');
+            gridDiv.innerHTML = '';
+            
+            for(let r = 0; r < 5; r++) {
+                for(let c = 0; c < 5; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    
+                    if (puzzle.grid[r] && puzzle.grid[r][c]) {
+                        const input = document.createElement('input');
+                        input.maxLength = 1;
+                        input.dataset.answer = puzzle.grid[r][c];
+                        input.dataset.row = r;
+                        input.dataset.col = c;
+                        input.oninput = checkLetter;
+                        cell.appendChild(input);
+                    } else {
+                        cell.classList.add('black');
+                    }
+                    
+                    gridDiv.appendChild(cell);
+                }
+            }
+        }
+        
+        function displayClues() {
+            const puzzle = puzzles[currentPuzzle];
+            const cluesDiv = document.getElementById('clues');
+            cluesDiv.innerHTML = '';
+            
+            puzzle.clues.forEach((clue, index) => {
+                const clueDiv = document.createElement('div');
+                clueDiv.className = 'clue-item';
+                clueDiv.onclick = () => highlightClue(index);
+                clueDiv.innerHTML = `
+                    <span class="clue-icon">${clue.icon}</span>
+                    <span class="clue-text">${clue.text}</span>
+                    <span class="clue-length">(${clue.length} letters)</span>
+                `;
+                cluesDiv.appendChild(clueDiv);
+            });
+        }
+        
+        function checkLetter(e) {
+            const input = e.target;
+            const correct = input.dataset.answer;
+            
+            if (input.value.toUpperCase() === correct) {
+                input.style.color = 'green';
+                input.style.backgroundColor = '#d4edda';
+            } else {
+                input.style.color = 'red';
+                input.style.backgroundColor = '#f8d7da';
+            }
+        }
+        
+        function highlightClue(index) {
+            const puzzle = puzzles[currentPuzzle];
+            const answer = puzzle.clues[index].answer;
+            alert(`Find the word: ${answer} (${answer.length} letters)`);
+        }
+        
+        function nextPuzzle() {
+            currentPuzzle = (currentPuzzle + 1) % puzzles.length;
+            createGrid();
+            displayClues();
+            
+            // Celebration
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+        
+        createGrid();
+        displayClues();
+    </script>
+</body>
+</html>

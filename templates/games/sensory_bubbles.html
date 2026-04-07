@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Pop - Fun Popping Game</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #89f7fe, #66a6ff); padding: 20px; margin: 0; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .game-area { background: rgba(255,255,255,0.9); border-radius: 30px; padding: 30px; backdrop-filter: blur(10px); }
+        
+        .bubble-container { 
+            position: relative; 
+            height: 600px; 
+            background: linear-gradient(180deg, #87CEEB, #B0E0E6); 
+            border-radius: 30px; 
+            overflow: hidden; 
+            cursor: pointer; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            border: 3px solid white;
+        }
+        
+        .bubble { 
+            position: absolute; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 2em; 
+            cursor: pointer; 
+            transition: transform 0.2s; 
+            animation: float 3s infinite; 
+            box-shadow: 0 0 20px rgba(255,255,255,0.5); 
+            border: 2px solid rgba(255,255,255,0.5);
+            user-select: none;
+        }
+        
+        .bubble:hover { transform: scale(1.2); filter: brightness(1.2); }
+        .bubble.popping { animation: pop 0.3s forwards; }
+        
+        @keyframes float { 
+            0%,100% { transform: translateY(0); } 
+            50% { transform: translateY(-20px); } 
+        }
+        
+        @keyframes pop { 
+            0% { transform: scale(1); opacity: 1; } 
+            100% { transform: scale(2); opacity: 0; } 
+        }
+        
+        .controls { 
+            display: flex; 
+            gap: 20px; 
+            justify-content: center; 
+            margin: 20px 0; 
+            flex-wrap: wrap; 
+        }
+        
+        .speed-btn { 
+            padding: 15px 30px; 
+            border: none; 
+            border-radius: 50px; 
+            font-size: 1.2em; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            background: white; 
+            color: #333; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+            font-weight: bold;
+        }
+        
+        .speed-btn:hover { transform: scale(1.1); }
+        .speed-btn.active { background: #4CAF50; color: white; }
+        
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; font-size: 1.3em; font-weight: bold; }
+        .level-badge { background: #FF9800; color: white; padding: 15px 30px; border-radius: 30px; font-size: 1.3em; font-weight: bold; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; font-weight: bold; transition: all 0.3s; }
+        .back-btn:hover { transform: scale(1.05); }
+        
+        .reward { 
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%,-50%); 
+            font-size: 4em; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 60px; 
+            animation: popReward 0.5s; 
+            z-index: 1000; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+        }
+        
+        @keyframes popReward { 
+            0%{transform:translate(-50%,-50%) scale(0)} 
+            100%{transform:translate(-50%,-50%) scale(1)} 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="stats-bar">
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1 style="font-size: 2.5em; color: #333;">💭 Bubble Pop</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+
+        <div class="game-area">
+            <div class="controls">
+                <button class="speed-btn active" onclick="setSpeed(1)">🐢 Slow</button>
+                <button class="speed-btn" onclick="setSpeed(2)">🚶 Normal</button>
+                <button class="speed-btn" onclick="setSpeed(3)">⚡ Fast</button>
+            </div>
+            
+            <div class="bubble-container" id="bubbleContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let level = 1;
+        let score = 0;
+        let speed = 1;
+        let bubbleCount = 0;
+        let gameInterval;
+
+        function playSound(text) {
+            try {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+
+        function saveProgress() {
+            fetch('/api/progress/sensory_bubbles', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ level: level, score: score, correct: true })
+            });
+        }
+
+        function loadProgress() {
+            fetch('/api/progress/sensory_bubbles')
+                .then(res => res.json())
+                .then(data => {
+                    level = data.level || 1;
+                    score = data.score || 0;
+                    updateDisplay();
+                })
+                .catch(() => {});
+        }
+
+        function updateDisplay() {
+            document.getElementById('levelDisplay').textContent = 'Level ' + level;
+            document.getElementById('score').textContent = score;
+        }
+
+        function setSpeed(newSpeed) {
+            speed = newSpeed;
+            document.querySelectorAll('.speed-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Restart bubble generation with new speed
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(autoCreateBubble, 1000 / speed);
+        }
+
+        function autoCreateBubble() {
+            let container = document.getElementById('bubbleContainer');
+            let rect = container.getBoundingClientRect();
+            
+            let x = Math.random() * rect.width;
+            let y = Math.random() * rect.height;
+            
+            createBubbleAt(x, y);
+        }
+
+        function createBubble(e) {
+            let rect = e.currentTarget.getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            createBubbleAt(x, y);
+        }
+
+        function createBubbleAt(x, y) {
+            let container = document.getElementById('bubbleContainer');
+            
+            let bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            
+            let size = Math.random() * 70 + 30;
+            let hue = Math.random() * 360;
+            
+            bubble.style.width = size + 'px';
+            bubble.style.height = size + 'px';
+            bubble.style.left = (x - size/2) + 'px';
+            bubble.style.top = (y - size/2) + 'px';
+            bubble.style.background = `hsla(${hue}, 80%, 70%, 0.9)`;
+            bubble.style.animationDuration = (3 / speed) + 's';
+            
+            let emojis = ['💭','💨','💧','✨','🌟','⭐','☁️','💫'];
+            bubble.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            
+            bubble.onclick = function(e) {
+                e.stopPropagation();
+                this.classList.add('popping');
+                
+                let points = 5 * level;
+                score += points;
+                bubbleCount++;
+                
+                if (bubbleCount % 5 === 0) {
+                    level++;
+                    updateDisplay();
+                    showReward('🌟 Level Up!');
+                    playSound('Level Up!');
+                }
+                
+                updateDisplay();
+                showReward('💭 +' + points);
+                playSound('Pop!');
+                saveProgress();
+                
+                setTimeout(() => this.remove(), 300);
+            };
+            
+            container.appendChild(bubble);
+            
+            // Auto remove after animation
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            }, 3000 / speed);
+        }
+
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1000);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            
+            let container = document.getElementById('bubbleContainer');
+            container.addEventListener('click', createBubble);
+            
+            gameInterval = setInterval(autoCreateBubble, 1000);
+        });
+    </script>
+</body>
+</html>

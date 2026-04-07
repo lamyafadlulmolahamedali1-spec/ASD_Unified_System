@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Endless Social Stories</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            font-size: 1.3em;
+        }
+        .story-box {
+            background: #f8f9fa;
+            border-radius: 30px;
+            padding: 40px;
+            margin: 30px 0;
+            min-height: 400px;
+            position: relative;
+        }
+        .story-icon {
+            font-size: 4em;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .story-title {
+            font-size: 2em;
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .story-content {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin: 30px 0;
+        }
+        .story-image {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 5em;
+        }
+        .choices {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+        .choice-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .choice-btn:hover {
+            transform: scale(1.1);
+        }
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            animation: celebrate 1s ease;
+            display: none;
+            z-index: 1000;
+        }
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) scale(1.5) rotate(180deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Endless Social Stories</h1>
+        
+        <div class="stats">
+            <div>Stories Read: <span id="count">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+        </div>
+        
+        <div class="story-box" id="storyBox">
+            <div class="story-icon" id="storyIcon">📖</div>
+            <div class="story-title" id="storyTitle">Making Friends</div>
+            <div class="story-image" id="storyImage">👋🧒👧</div>
+            <div class="story-content" id="storyContent">
+                Today at school, Sarah saw a new student sitting alone...
+            </div>
+        </div>
+        
+        <div class="choices">
+            <button class="choice-btn" onclick="nextStory()">Next Story</button>
+            <button class="choice-btn" onclick="newAdventure()">New Adventure</button>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration">🌟 NEW STORY! 🌟</div>
+    
+    <script>
+        let count = 0;
+        let level = 1;
+        
+        const socialSituations = [
+            {
+                icon: '👋',
+                title: 'Making Friends',
+                image: '🧒👋🧑',
+                content: 'A new student came to school today. They look nervous. What should you do?'
+            },
+            {
+                icon: '🤝',
+                title: 'Sharing Toys',
+                image: '🧸🤝🧸',
+                content: 'Your friend wants to play with your favorite toy. How do you share?'
+            },
+            {
+                icon: '😊',
+                title: 'Saying Please',
+                image: '🙏😊',
+                content: 'You want to ask for something. Remember to say "please" and "thank you"!'
+            },
+            {
+                icon: '👂',
+                title: 'Listening',
+                image: '👂📢',
+                content: 'The teacher is talking. It\'s important to listen and wait for your turn.'
+            },
+            {
+                icon: '❤️',
+                title: 'Being Kind',
+                image: '💝🤗',
+                content: 'Your friend is sad. How can you show them you care?'
+            },
+            {
+                icon: '🎮',
+                title: 'Playing Together',
+                image: '🎮👥',
+                content: 'It\'s play time! How do you ask someone to play with you?'
+            },
+            {
+                icon: '😌',
+                title: 'Waiting Patiently',
+                image: '⏰😌',
+                content: 'It\'s not your turn yet. What can you do while you wait?'
+            },
+            {
+                icon: '🗣️',
+                title: 'Using Words',
+                image: '💬🗣️',
+                content: 'Instead of pushing or grabbing, use your words to ask for things.'
+            }
+        ];
+        
+        function nextStory() {
+            count++;
+            if (count % 3 === 0) {
+                level++;
+                celebrate();
+            }
+            
+            const story = socialSituations[Math.floor(Math.random() * socialSituations.length)];
+            
+            document.getElementById('storyIcon').textContent = story.icon;
+            document.getElementById('storyTitle').textContent = story.title;
+            document.getElementById('storyImage').textContent = story.image;
+            document.getElementById('storyContent').textContent = story.content;
+            
+            updateStats();
+        }
+        
+        function newAdventure() {
+            count = 0;
+            level = 1;
+            nextStory();
+        }
+        
+        function celebrate() {
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'block';
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 2000);
+        }
+        
+        function updateStats() {
+            document.getElementById('count').textContent = count;
+            document.getElementById('level').textContent = level;
+        }
+        
+        // Start with first story
+        nextStory();
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("social_stories_english.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

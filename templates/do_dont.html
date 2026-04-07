@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Do & Don't - Social Skills</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .scenario {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .scenario-icon { font-size: 4em; margin-bottom: 20px; }
+        .scenario-text { font-size: 1.5em; font-weight: bold; margin-bottom: 30px; }
+        .choices { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin: 30px 0; }
+        .choice {
+            padding: 20px 40px;
+            border-radius: 60px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            border: none;
+        }
+        .choice.do { background: #28a745; color: white; }
+        .choice.dont { background: #dc3545; color: white; }
+        .choice:hover { transform: scale(1.05); }
+        .feedback { text-align: center; padding: 15px; border-radius: 15px; margin: 20px 0; font-size: 1.2em; }
+        .back-btn { display: inline-block; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤝 Do & Don't - Social Skills</h1>
+        
+        <div class="scenario">
+            <div class="scenario-icon" id="scenarioIcon">🗑️🌍</div>
+            <div class="scenario-text" id="scenarioText">You see trash on the ground. What should you do?</div>
+        </div>
+        
+        <div class="choices">
+            <button class="choice do" onclick="checkChoice('do')">✅ DO - Pick it up and throw it away</button>
+            <button class="choice dont" onclick="checkChoice('dont')">❌ DON'T - Walk past and leave it</button>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div style="text-align: center;">
+            <button onclick="nextScenario()" style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 30px; cursor: pointer;">Next Scenario</button>
+            <a href="/" class="back-btn" style="margin-left: 20px;">← Back to Games</a>
+        </div>
+    </div>
+    
+    <script>
+        const stats = new GameStats('do_dont');
+        let currentScenario = 0;
+        
+        const scenarios = [
+            {icon: '👋😊', text: 'Your friend says hello. What should you do?', correct: 'do', doText: 'Smile and say hello back', dontText: 'Ignore them'},
+            {icon: '🧸😢', text: 'Your friend is sad. What should you do?', correct: 'do', doText: 'Give them a hug', dontText: 'Ignore them'},
+            {icon: '🎮🤝', text: 'You want to play with someone\'s toy. What should you do?', correct: 'do', doText: 'Ask nicely', dontText: 'Grab it'},
+            {icon: '🗑️🌍', text: 'You see trash on the ground. What should you do?', correct: 'do', doText: 'Pick it up', dontText: 'Leave it'},
+            {icon: '👂📢', text: 'The teacher is talking. What should you do?', correct: 'do', doText: 'Listen quietly', dontText: 'Talk loudly'}
+        ];
+        
+        function displayScenario() {
+            const s = scenarios[currentScenario];
+            document.getElementById('scenarioIcon').textContent = s.icon;
+            document.getElementById('scenarioText').textContent = s.text;
+            document.querySelector('.choice.do').innerHTML = `✅ DO - ${s.doText}`;
+            document.querySelector('.choice.dont').innerHTML = `❌ DON'T - ${s.dontText}`;
+            document.getElementById('feedback').innerHTML = '';
+        }
+        
+        function checkChoice(choice) {
+            const s = scenarios[currentScenario];
+            const feedback = document.getElementById('feedback');
+            
+            if (choice === s.correct) {
+                stats.addCorrect();  // TRACK CORRECT!
+                feedback.innerHTML = '✅ Excellent! That\'s the right choice! +10 points';
+                feedback.style.background = '#d4edda';
+                feedback.style.color = '#155724';
+                setTimeout(() => nextScenario(), 1500);
+            } else {
+                stats.addWrong();  // TRACK WRONG!
+                feedback.innerHTML = '❌ Try again! That\'s not the right choice. -5 points';
+                feedback.style.background = '#f8d7da';
+                feedback.style.color = '#721c24';
+            }
+        }
+        
+        function nextScenario() {
+            currentScenario = (currentScenario + 1) % scenarios.length;
+            displayScenario();
+        }
+        
+        displayScenario();
+    </script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

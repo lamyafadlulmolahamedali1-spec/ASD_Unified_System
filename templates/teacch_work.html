@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TEACCH Work System</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .tasks {
+            margin: 30px 0;
+        }
+        .task {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .task:hover { transform: translateX(5px); }
+        .task.completed { background: #d4edda; text-decoration: line-through; }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ TEACCH Work System</h1>
+        <div id="tasks"></div>
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('teacch_work');
+        
+        let workTasks = [
+            { name: 'Sort shapes', points: 10, done: false },
+            { name: 'Match colors', points: 10, done: false },
+            { name: 'Count objects', points: 15, done: false },
+            { name: 'Complete pattern', points: 15, done: false },
+            { name: 'Write name', points: 20, done: false }
+        ];
+        
+        function completeTask(index) {
+            if (!workTasks[index].done) {
+                workTasks[index].done = true;
+                stats.addCorrect(); // TRACK CORRECT TASK!
+                
+                if (workTasks.every(t => t.done)) {
+                    stats.levelUp();
+                    setTimeout(() => {
+                        alert('🎉 Great work! New tasks!');
+                        workTasks.forEach(t => t.done = false);
+                        renderTasks();
+                    }, 1000);
+                } else {
+                    renderTasks();
+                }
+            }
+        }
+        
+        function renderTasks() {
+            const container = document.getElementById('tasks');
+            container.innerHTML = '<div class="tasks">';
+            workTasks.forEach((task, i) => {
+                container.innerHTML += `
+                    <div class="task ${task.done ? 'completed' : ''}" onclick="completeTask(${i})">
+                        <strong>${task.name}</strong> - ${task.points} points
+                        ${task.done ? ' ✅' : ''}
+                    </div>
+                `;
+            });
+            container.innerHTML += '</div>';
+        }
+        
+        renderTasks();
+    </script>
+</body>
+</html>

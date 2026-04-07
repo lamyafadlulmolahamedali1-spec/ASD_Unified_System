@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TEACCH Daily Schedule - My Day</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .day-display {
+            text-align: center;
+            font-size: 2em;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        .morning-routine, .afternoon-routine, .evening-routine {
+            margin: 40px 0;
+            padding: 20px;
+            border-radius: 20px;
+            background: #f8f9fa;
+        }
+        .routine-title {
+            font-size: 1.8em;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tasks-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .task-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 3px solid transparent;
+        }
+        .task-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+        }
+        .task-card.completed {
+            background: #d4edda;
+            opacity: 0.8;
+        }
+        .task-icon {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+        .task-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .task-time {
+            color: #666;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s;
+        }
+        .next-day-btn {
+            display: block;
+            margin: 40px auto;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3em;
+            cursor: pointer;
+        }
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            animation: celebrate 1s ease;
+            display: none;
+        }
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            50% { transform: translate(-50%, -50%) scale(1.5); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 My Daily Routine</h1>
+        
+        <div class="day-display" id="dayDisplay">Day 1 - Monday</div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress" style="width: 0%"></div>
+        </div>
+        
+        <!-- Morning Routine -->
+        <div class="morning-routine">
+            <div class="routine-title">
+                <span>🌅 Morning</span>
+                <span>6:00 AM - 8:00 AM</span>
+            </div>
+            <div class="tasks-grid" id="morningTasks"></div>
+        </div>
+        
+        <!-- Afternoon Routine -->
+        <div class="afternoon-routine">
+            <div class="routine-title">
+                <span>☀️ Afternoon</span>
+                <span>12:00 PM - 3:00 PM</span>
+            </div>
+            <div class="tasks-grid" id="afternoonTasks"></div>
+        </div>
+        
+        <!-- Evening Routine -->
+        <div class="evening-routine">
+            <div class="routine-title">
+                <span>🌙 Evening</span>
+                <span>6:00 PM - 9:00 PM</span>
+            </div>
+            <div class="tasks-grid" id="eveningTasks"></div>
+        </div>
+        
+        <button class="next-day-btn" onclick="nextDay()">🌟 Next Day</button>
+    </div>
+    
+    <div class="celebration" id="celebration">🎉 DAY COMPLETE! 🎉</div>
+    
+    <script>
+        let day = 1;
+        let completedTasks = 0;
+        const totalTasks = 12;
+        
+        const morningTasks = [
+            {icon: '😴', name: 'Wake Up', time: '6:30 AM', desc: 'Open eyes, stretch', done: false},
+            {icon: '🚽', name: 'Use Toilet', time: '6:35 AM', desc: 'Go to bathroom', done: false},
+            {icon: '🪥', name: 'Brush Teeth', time: '6:40 AM', desc: 'Brush for 2 minutes', done: false},
+            {icon: '🧼', name: 'Wash Face', time: '6:45 AM', desc: 'Splash water on face', done: false},
+            {icon: '👕', name: 'Get Dressed', time: '6:50 AM', desc: 'Put on school uniform', done: false},
+            {icon: '🛏️', name: 'Make Bed', time: '7:00 AM', desc: 'Arrange your bed', done: false},
+            {icon: '🥣', name: 'Breakfast', time: '7:15 AM', desc: 'Eat healthy breakfast', done: false},
+            {icon: '🎒', name: 'Pack Bag', time: '7:45 AM', desc: 'Get ready for school', done: false},
+            {icon: '🚶', name: 'Go to School', time: '8:00 AM', desc: 'Walk to school', done: false}
+        ];
+        
+        const afternoonTasks = [
+            {icon: '🏫', name: 'School Time', time: '8:30 AM', desc: 'Learn new things', done: false},
+            {icon: '🍎', name: 'Lunch Time', time: '12:00 PM', desc: 'Eat lunch at school', done: false},
+            {icon: '📚', name: 'Study', time: '1:00 PM', desc: 'Do homework', done: false},
+            {icon: '🎨', name: 'Art Class', time: '2:00 PM', desc: 'Draw and color', done: false},
+            {icon: '🏃', name: 'Play Time', time: '3:00 PM', desc: 'Play with friends', done: false}
+        ];
+        
+        const eveningTasks = [
+            {icon: '🏠', name: 'Go Home', time: '4:00 PM', desc: 'Return from school', done: false},
+            {icon: '👕', name: 'Change Clothes', time: '4:15 PM', desc: 'Put on home clothes', done: false},
+            {icon: '🧹', name: 'Clean Room', time: '4:30 PM', desc: 'Tidy up your room', done: false},
+            {icon: '😴', name: 'Rest', time: '5:00 PM', desc: 'Take a short break', done: false},
+            {icon: '📖', name: 'Study Time', time: '5:30 PM', desc: 'Review lessons', done: false},
+            {icon: '👨‍👩‍👧', name: 'Family Time', time: '6:30 PM', desc: 'Spend time with family', done: false},
+            {icon: '🍽️', name: 'Dinner', time: '7:30 PM', desc: 'Eat dinner together', done: false},
+            {icon: '📺', name: 'Free Time', time: '8:00 PM', desc: 'Watch TV or play', done: false},
+            {icon: '🛁', name: 'Take Bath', time: '8:30 PM', desc: 'Evening bath', done: false},
+            {icon: '📖', name: 'Bedtime Story', time: '9:00 PM', desc: 'Read a story', done: false},
+            {icon: '😴', name: 'Go to Sleep', time: '9:30 PM', desc: 'Close eyes and sleep', done: false}
+        ];
+        
+        function displayTasks() {
+            // Morning tasks
+            const morningDiv = document.getElementById('morningTasks');
+            morningDiv.innerHTML = '';
+            morningTasks.forEach((task, index) => {
+                const card = createTaskCard(task, 'morning', index);
+                morningDiv.appendChild(card);
+            });
+            
+            // Afternoon tasks
+            const afternoonDiv = document.getElementById('afternoonTasks');
+            afternoonDiv.innerHTML = '';
+            afternoonTasks.forEach((task, index) => {
+                const card = createTaskCard(task, 'afternoon', index);
+                afternoonDiv.appendChild(card);
+            });
+            
+            // Evening tasks
+            const eveningDiv = document.getElementById('eveningTasks');
+            eveningDiv.innerHTML = '';
+            eveningTasks.forEach((task, index) => {
+                const card = createTaskCard(task, 'evening', index);
+                eveningDiv.appendChild(card);
+            });
+            
+            updateDayDisplay();
+        }
+        
+        function createTaskCard(task, period, index) {
+            const card = document.createElement('div');
+            card.className = 'task-card' + (task.done ? ' completed' : '');
+            card.onclick = () => completeTask(card, period, index);
+            card.innerHTML = `
+                <div class="task-icon">${task.icon}</div>
+                <div class="task-name">${task.name}</div>
+                <div class="task-time">${task.time}</div>
+                <div style="font-size: 0.9em; margin-top: 10px;">${task.desc}</div>
+            `;
+            return card;
+        }
+        
+        function completeTask(card, period, index) {
+            if (!card.classList.contains('completed')) {
+                card.classList.add('completed');
+                
+                // Mark task as done
+                if (period === 'morning') morningTasks[index].done = true;
+                if (period === 'afternoon') afternoonTasks[index].done = true;
+                if (period === 'evening') eveningTasks[index].done = true;
+                
+                completedTasks++;
+                updateProgress();
+                
+                // Celebration
+                createConfetti();
+            }
+        }
+        
+        function updateProgress() {
+            const percentage = (completedTasks / totalTasks) * 100;
+            document.getElementById('progress').style.width = percentage + '%';
+            
+            if (completedTasks === totalTasks) {
+                celebrate();
+            }
+        }
+        
+        function createConfetti() {
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+        
+        function celebrate() {
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'block';
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 2000);
+        }
+        
+        function nextDay() {
+            day++;
+            completedTasks = 0;
+            
+            // Reset all tasks
+            morningTasks.forEach(t => t.done = false);
+            afternoonTasks.forEach(t => t.done = false);
+            eveningTasks.forEach(t => t.done = false);
+            
+            displayTasks();
+            updateProgress();
+            celebrate();
+        }
+        
+        function updateDayDisplay() {
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const dayName = days[(day - 1) % 7];
+            document.getElementById('dayDisplay').textContent = `Day ${day} - ${dayName}`;
+        }
+        
+        displayTasks();
+    </script>
+</body>
+</html>

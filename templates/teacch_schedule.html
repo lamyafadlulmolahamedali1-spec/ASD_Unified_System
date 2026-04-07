@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TEACCH Schedule</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .tasks {
+            margin: 30px 0;
+        }
+        .task {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .task.completed { background: #d4edda; text-decoration: line-through; }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #28a745;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 TEACCH Daily Schedule</h1>
+        <div class="progress-bar"><div class="progress-fill" id="progress" style="width: 0%"></div></div>
+        <div id="tasks"></div>
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('teacch_schedule');
+        
+        const tasks = [
+            { name: 'Wake up', icon: '🌅', done: false },
+            { name: 'Brush teeth', icon: '🪥', done: false },
+            { name: 'Get dressed', icon: '👕', done: false },
+            { name: 'Eat breakfast', icon: '🥣', done: false },
+            { name: 'Go to school', icon: '🏫', done: false }
+        ];
+        
+        function updateProgress() {
+            const completed = tasks.filter(t => t.done).length;
+            const percent = (completed / tasks.length) * 100;
+            document.getElementById('progress').style.width = percent + '%';
+            
+            if (completed === tasks.length) {
+                stats.addCorrect(); // TRACK COMPLETION!
+                stats.levelUp();
+                setTimeout(() => {
+                    alert('🎉 Great job! New day!');
+                    tasks.forEach(t => t.done = false);
+                    renderTasks();
+                }, 1000);
+            }
+        }
+        
+        function completeTask(index) {
+            if (!tasks[index].done) {
+                tasks[index].done = true;
+                stats.addCorrect(); // TRACK EACH TASK!
+                renderTasks();
+                updateProgress();
+            }
+        }
+        
+        function renderTasks() {
+            const container = document.getElementById('tasks');
+            container.innerHTML = '<div class="tasks">';
+            tasks.forEach((task, i) => {
+                container.innerHTML += `
+                    <div class="task ${task.done ? 'completed' : ''}" onclick="completeTask(${i})">
+                        <span>${task.icon} ${task.name}</span>
+                        <span>${task.done ? '✅' : '⬜'}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML += '</div>';
+        }
+        
+        renderTasks();
+    </script>
+</body>
+</html>

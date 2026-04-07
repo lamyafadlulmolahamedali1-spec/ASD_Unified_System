@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pepper Therapy - Games</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .game-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            border-color: #667eea;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .game-icon {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+        }
+        .game-name {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #333;
+        }
+        a {
+            text-decoration: none;
+        }
+        .progress-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .progress-link a {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress-link">
+    <a href="https://gemini.google.com" target="_blank" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #4285f4, #ea4335); color: white; text-decoration: none; border-radius: 30px; font-weight: bold; margin-right: 10px;">✨ Google Gemini AI (Safe for Kids) ✨</a>
+
+            <a href="/progress">📊 View All Progress</a>
+            <a href="/game/autism_games" style="margin-left: 10px; background: linear-gradient(135deg, #ff6b6b, #ee5a24);">🌟 52+ Autism Projects</a>
+        </div>
+        <h1>🎮 Pepper Therapy Games</h1>
+        <div class="subtitle">{{ games|length }} games available - Click to play</div>
+        <div class="games-grid">
+            {% for game in games %}
+            <a href="/game/{{ game }}">
+                <div class="game-card">
+                    <div class="game-icon">{{ icons[game] }}</div>
+                    <div class="game-name">{{ game.replace('_', ' ').title() }}</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TEACCH Work System - Tasks & Points</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            font-size: 1.3em;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .tasks-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .task-category {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+        }
+        .task-category h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .task-item {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .task-item:hover {
+            transform: translateX(5px);
+            border-color: #667eea;
+        }
+        .task-item.completed {
+            background: #d4edda;
+            opacity: 0.8;
+        }
+        .task-icon {
+            font-size: 2.5em;
+        }
+        .task-info {
+            flex: 1;
+        }
+        .task-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .task-points {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .points-display {
+            font-size: 2em;
+            color: gold;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .next-level-btn {
+            display: block;
+            margin: 30px auto;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.3em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Work System - Earn Points</h1>
+        
+        <div class="stats">
+            <div>Level: <span id="level">1</span></div>
+            <div>Points: <span id="points">0</span></div>
+            <div>Tasks: <span id="tasks">0/12</span></div>
+        </div>
+        
+        <div class="points-display" id="stars">⭐</div>
+        
+        <div class="tasks-container">
+            <div class="task-category">
+                <h2>🏠 Home Tasks</h2>
+                <div id="homeTasks"></div>
+            </div>
+            <div class="task-category">
+                <h2>📚 Learning Tasks</h2>
+                <div id="learningTasks"></div>
+            </div>
+            <div class="task-category">
+                <h2>🎯 Fun Tasks</h2>
+                <div id="funTasks"></div>
+            </div>
+        </div>
+        
+        <button class="next-level-btn" onclick="nextLevel()">🌟 Next Level</button>
+    </div>
+    
+    <script>
+        let level = 1;
+        let points = 0;
+        let completedTasks = 0;
+        
+        const homeTasks = [
+            {icon: '🧹', name: 'Clean Room', points: 10, desc: 'Tidy up your room', done: false},
+            {icon: '🛏️', name: 'Make Bed', points: 5, desc: 'Arrange bed neatly', done: false},
+            {icon: '🧼', name: 'Wash Dishes', points: 15, desc: 'Help wash dishes', done: false},
+            {icon: '👕', name: 'Fold Clothes', points: 10, desc: 'Fold your clothes', done: false}
+        ];
+        
+        const learningTasks = [
+            {icon: '📖', name: 'Read Book', points: 20, desc: 'Read for 15 mins', done: false},
+            {icon: '✏️', name: 'Write Words', points: 15, desc: 'Practice writing', done: false},
+            {icon: '🧮', name: 'Math Problems', points: 20, desc: 'Solve 5 problems', done: false},
+            {icon: '🎨', name: 'Drawing', points: 15, desc: 'Draw a picture', done: false}
+        ];
+        
+        const funTasks = [
+            {icon: '🧩', name: 'Complete Puzzle', points: 25, desc: 'Finish a puzzle', done: false},
+            {icon: '🎮', name: 'Memory Game', points: 20, desc: 'Play memory game', done: false},
+            {icon: '🎵', name: 'Sing a Song', points: 10, desc: 'Sing your favorite song', done: false},
+            {icon: '🏃', name: 'Exercise', points: 15, desc: 'Jump 20 times', done: false}
+        ];
+        
+        function displayTasks() {
+            displayCategory('homeTasks', homeTasks);
+            displayCategory('learningTasks', learningTasks);
+            displayCategory('funTasks', funTasks);
+        }
+        
+        function displayCategory(elementId, tasks) {
+            const container = document.getElementById(elementId);
+            container.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const taskDiv = document.createElement('div');
+                taskDiv.className = 'task-item' + (task.done ? ' completed' : '');
+                taskDiv.onclick = () => completeTask(taskDiv, tasks, index);
+                taskDiv.innerHTML = `
+                    <div class="task-icon">${task.icon}</div>
+                    <div class="task-info">
+                        <div class="task-name">${task.name}</div>
+                        <div style="font-size: 0.9em; color: #666;">${task.desc}</div>
+                    </div>
+                    <div class="task-points">+${task.points}</div>
+                `;
+                container.appendChild(taskDiv);
+            });
+        }
+        
+        function completeTask(taskDiv, tasks, index) {
+            if (!tasks[index].done) {
+                tasks[index].done = true;
+                taskDiv.classList.add('completed');
+                
+                points += tasks[index].points;
+                completedTasks++;
+                
+                updateStats();
+                createConfetti();
+            }
+        }
+        
+        function updateStats() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('points').textContent = points;
+            document.getElementById('tasks').textContent = completedTasks + '/12';
+            
+            // Update stars
+            let stars = '';
+            for (let i = 0; i < Math.min(Math.floor(points/50) + 1, 5); i++) {
+                stars += '⭐';
+            }
+            document.getElementById('stars').textContent = stars || '⭐';
+        }
+        
+        function createConfetti() {
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }, i * 50);
+            }
+        }
+        
+        function nextLevel() {
+            level++;
+            points += 50;
+            
+            // Reset tasks but keep points
+            homeTasks.forEach(t => t.done = false);
+            learningTasks.forEach(t => t.done = false);
+            funTasks.forEach(t => t.done = false);
+            completedTasks = 0;
+            
+            displayTasks();
+            updateStats();
+            createConfetti();
+        }
+        
+        displayTasks();
+    </script>
+</body>
+</html>

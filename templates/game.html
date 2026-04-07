@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ game.name }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #764ba2;
+            margin-bottom: 20px;
+        }
+        .game-icon {
+            font-size: 60px;
+            margin: 10px 0;
+        }
+        .score-board {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .score-item {
+            text-align: center;
+            padding: 10px 20px;
+            background: #e9ecef;
+            border-radius: 15px;
+            min-width: 100px;
+        }
+        .score-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #764ba2;
+        }
+        .game-area {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 20px;
+        }
+        .choice-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 30px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .choice-btn:hover {
+            background: #764ba2;
+            transform: scale(1.02);
+        }
+        .manual-buttons {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .correct-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .wrong-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .feedback {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .note {
+            font-size: 12px;
+            color: #888;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="game-icon">{{ game.icon }}</div>
+    <h1>{{ game.name }}</h1>
+
+    <!-- العداد -->
+    <div class="score-board">
+        <div class="score-item">
+            <div>✅ CORRECT</div>
+            <div class="score-value" id="correctCount">0</div>
+        </div>
+        <div class="score-item">
+            <div>❌ WRONG</div>
+            <div class="score-value" id="wrongCount">0</div>
+        </div>
+        <div class="score-item">
+            <div>💰 SCORE</div>
+            <div class="score-value" id="scoreCount">0</div>
+        </div>
+    </div>
+
+    <!-- منطقة اللعب (لعبة بسيطة تناسب كل الأسماء) -->
+    <div class="game-area" id="gameArea">
+        <div id="questionText" style="font-size: 24px; margin-bottom: 20px;"></div>
+        <div id="choices"></div>
+    </div>
+
+    <!-- أزرار يدوية (في حال لم تعمل اللعبة) -->
+    <div class="manual-buttons">
+        <button class="correct-btn" onclick="manualCorrect()">✓ Correct Answer (+10)</button>
+        <button class="wrong-btn" onclick="manualWrong()">✗ Wrong Answer</button>
+        <div class="note">⚠️ إذا لم تعمل أزرار اللعبة، استخدم هذه الأزرار لتسجيل إجابتك.</div>
+    </div>
+    <div id="feedback" class="feedback"></div>
+</div>
+
+<script>
+    // بيانات الطفل واللعبة (تأتي من القالب)
+    let childName = "{{ child_name }}";
+    let gameId = "{{ game.id }}";
+    let correct = 0;
+    let wrong = 0;
+    let score = 0;
+
+    // تحديث العداد
+    function updateDisplay() {
+        document.getElementById('correctCount').innerText = correct;
+        document.getElementById('wrongCount').innerText = wrong;
+        document.getElementById('scoreCount').innerText = score;
+    }
+
+    // إرسال إلى السيرفر
+    async function sendScore() {
+        try {
+            await fetch("/api/submit-score", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    child_name: childName,
+                    game_id: gameId,
+                    correct: correct,
+                    wrong: wrong,
+                    score: score
+                })
+            });
+        } catch(e) { console.error(e); }
+    }
+
+    // رسالة مؤقتة
+    function showMessage(msg, isSuccess) {
+        let fb = document.getElementById('feedback');
+        fb.style.backgroundColor = isSuccess ? '#d4edda' : '#f8d7da';
+        fb.style.color = isSuccess ? '#155724' : '#721c24';
+        fb.innerHTML = msg;
+        setTimeout(() => { fb.innerHTML = ''; }, 1500);
+    }
+
+    // تسجيل إجابة صحيحة
+    function recordCorrect(points = 10) {
+        correct++;
+        score += points;
+        updateDisplay();
+        sendScore();
+        showMessage("✅ صحيح! +" + points + " نقطة", true);
+    }
+
+    // تسجيل إجابة خاطئة
+    function recordWrong() {
+        wrong++;
+        updateDisplay();
+        sendScore();
+        showMessage("❌ خطأ! حاول مجدداً", false);
+    }
+
+    // دوال يدوية (من الأزرار الخارجية)
+    window.manualCorrect = recordCorrect;
+    window.manualWrong = recordWrong;
+
+    // ---------- لعبة بسيطة عامة (تعمل مع جميع الألعاب) ----------
+    // نختار أسئلة حسب اسم اللعبة
+    let gameName = gameId.toLowerCase();
+
+    // قاعدة أسئلة عامة
+    let questions = [];
+    if (gameName.includes('emotion')) {
+        questions = [
+            { text: "😊 What is this emotion?", correct: "Happy", options: ["Happy", "Sad", "Angry", "Surprised"] },
+            { text: "😢 What is this emotion?", correct: "Sad", options: ["Happy", "Sad", "Angry", "Excited"] },
+            { text: "😠 What is this emotion?", correct: "Angry", options: ["Happy", "Sad", "Angry", "Calm"] },
+            { text: "🎉 What is this emotion?", correct: "Excited", options: ["Bored", "Sad", "Excited", "Tired"] }
+        ];
+    } else if (gameName.includes('color')) {
+        questions = [
+            { text: "🔴 What color is this?", correct: "Red", options: ["Red", "Blue", "Green", "Yellow"] },
+            { text: "🔵 What color is this?", correct: "Blue", options: ["Red", "Blue", "Green", "Yellow"] },
+            { text: "🟢 What color is this?", correct: "Green", options: ["Red", "Blue", "Green", "Yellow"] },
+            { text: "🟡 What color is this?", correct: "Yellow", options: ["Red", "Blue", "Green", "Yellow"] }
+        ];
+    } else if (gameName.includes('count')) {
+        questions = [
+            { text: "🐶 🐶 🐶  How many dogs?", correct: "3", options: ["2", "3", "4", "5"] },
+            { text: "🍎 🍎  How many apples?", correct: "2", options: ["1", "2", "3", "4"] },
+            { text: "⭐ ⭐ ⭐ ⭐  How many stars?", correct: "4", options: ["2", "3", "4", "5"] },
+            { text: "🐱 🐱 🐱 🐱 🐱  How many cats?", correct: "5", options: ["3", "4", "5", "6"] }
+        ];
+    } else if (gameName.includes('memory')) {
+        questions = [
+            { text: "Which animal says 'meow'?", correct: "Cat", options: ["Dog", "Cat", "Cow", "Bird"] },
+            { text: "Which animal says 'woof'?", correct: "Dog", options: ["Dog", "Cat", "Cow", "Bird"] },
+            { text: "Which animal gives milk?", correct: "Cow", options: ["Dog", "Cat", "Cow", "Bird"] }
+        ];
+    } else {
+        // أسئلة عامة لأي لعبة
+        questions = [
+            { text: "What is 2 + 2?", correct: "4", options: ["3", "4", "5", "6"] },
+            { text: "What color is the sky?", correct: "Blue", options: ["Red", "Blue", "Green", "Yellow"] },
+            { text: "What sound does a dog make?", correct: "Woof", options: ["Meow", "Woof", "Moo", "Tweet"] },
+            { text: "How many legs does a cat have?", correct: "4", options: ["2", "3", "4", "5"] }
+        ];
+    }
+
+    let currentQuestion = null;
+
+    function loadQuestion() {
+        currentQuestion = questions[Math.floor(Math.random() * questions.length)];
+        document.getElementById('questionText').innerHTML = currentQuestion.text;
+        let choicesHtml = '';
+        currentQuestion.options.forEach(opt => {
+            choicesHtml += `<button class="choice-btn" onclick="checkAnswer('${opt}')">${opt}</button>`;
+        });
+        document.getElementById('choices').innerHTML = choicesHtml;
+    }
+
+    function checkAnswer(selected) {
+        if (selected === currentQuestion.correct) {
+            recordCorrect();
+            showMessage("✅ Correct! +10 points", true);
+        } else {
+            recordWrong();
+            showMessage("❌ Wrong! The correct answer is " + currentQuestion.correct, false);
+        }
+        loadQuestion(); // next question
+    }
+
+    loadQuestion();
+    updateDisplay();
+
+    // حفظ تلقائي كل 5 ثوانٍ
+    setInterval(sendScore, 5000);
+    window.addEventListener('beforeunload', () => sendScore());
+</script>
+</body>
+</html>

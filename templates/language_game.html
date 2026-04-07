@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn English - Fun Vocabulary</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #58cc02, #4caf50); padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; text-align: center; }
+        .target-emoji { font-size: 8em; margin: 20px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+        .options-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin: 30px 0; }
+        .option-card { background: #f0f0f0; border-radius: 20px; padding: 30px; font-size: 2em; cursor: pointer; transition: all 0.3s; border: 4px solid transparent; }
+        .option-card:hover { transform: scale(1.1); background: #e3f2fd; border-color: #4CAF50; }
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>🗣️ Learn English</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="target-emoji" id="target">🐶</div>
+            <div class="options-grid" id="options"></div>
+        </div>
+    </div>
+    <script>
+        const words = [
+            { emoji: '🐶', word: 'Dog' },
+            { emoji: '🐱', word: 'Cat' },
+            { emoji: '🐭', word: 'Mouse' },
+            { emoji: '🐹', word: 'Hamster' },
+            { emoji: '🐰', word: 'Rabbit' },
+            { emoji: '🦊', word: 'Fox' },
+            { emoji: '🐻', word: 'Bear' },
+            { emoji: '🐼', word: 'Panda' },
+            { emoji: '🐨', word: 'Koala' },
+            { emoji: '🦁', word: 'Lion' },
+            { emoji: '🐮', word: 'Cow' },
+            { emoji: '🐷', word: 'Pig' },
+            { emoji: '🐸', word: 'Frog' },
+            { emoji: '🐧', word: 'Penguin' },
+            { emoji: '🐦', word: 'Bird' },
+            { emoji: '🐤', word: 'Chick' },
+            { emoji: '🐣', word: 'Hatching' },
+            { emoji: '🐥', word: 'Duckling' },
+            { emoji: '🦆', word: 'Duck' },
+            { emoji: '🦅', word: 'Eagle' },
+            { emoji: '🦉', word: 'Owl' },
+            { emoji: '🦇', word: 'Bat' },
+            { emoji: '🐺', word: 'Wolf' },
+            { emoji: '🐗', word: 'Boar' },
+            { emoji: '🐴', word: 'Horse' },
+            { emoji: '🦄', word: 'Unicorn' },
+            { emoji: '🐝', word: 'Bee' },
+            { emoji: '🐛', word: 'Bug' },
+            { emoji: '🦋', word: 'Butterfly' },
+            { emoji: '🐌', word: 'Snail' },
+            { emoji: '🐞', word: 'Ladybug' },
+            { emoji: '🐜', word: 'Ant' },
+            { emoji: '🦟', word: 'Mosquito' },
+            { emoji: '🦗', word: 'Cricket' },
+            { emoji: '🕷️', word: 'Spider' },
+            { emoji: '🦂', word: 'Scorpion' },
+            { emoji: '🐢', word: 'Turtle' },
+            { emoji: '🐍', word: 'Snake' },
+            { emoji: '🦎', word: 'Lizard' },
+            { emoji: '🐙', word: 'Octopus' },
+            { emoji: '🦑', word: 'Squid' },
+            { emoji: '🦐', word: 'Shrimp' },
+            { emoji: '🦞', word: 'Lobster' },
+            { emoji: '🐠', word: 'Tropical Fish' },
+            { emoji: '🐟', word: 'Fish' },
+            { emoji: '🐡', word: 'Blowfish' },
+            { emoji: '🐬', word: 'Dolphin' },
+            { emoji: '🐳', word: 'Whale' },
+            { emoji: '🐋', word: 'Blue Whale' },
+            { emoji: '🦈', word: 'Shark' }
+        ];
+
+        let level = 1;
+        let score = 0;
+        let correct = 0;
+
+        function playSound(word) {
+            try {
+                let utterance = new SpeechSynthesisUtterance(word);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                window.speechSynthesis.speak(utterance);
+            } catch(e) {}
+        }
+
+        function saveProgress() {
+            fetch('/api/progress/language_game', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ level: level, score: score, correct: true })
+            });
+        }
+
+        function newRound() {
+            let target = words[Math.floor(Math.random() * words.length)];
+            document.getElementById('target').textContent = target.emoji;
+            
+            let options = [target.word];
+            while(options.length < 4) {
+                let randomWord = words[Math.floor(Math.random() * words.length)].word;
+                if(!options.includes(randomWord)) options.push(randomWord);
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            document.getElementById('options').innerHTML = options.map(word => 
+                `<div class="option-card" onclick="check('${word}', '${target.word}')">${word}</div>`
+            ).join('');
+        }
+
+        function check(selected, target) {
+            if(selected === target) {
+                score += 10 * level;
+                correct++;
+                document.getElementById('score').textContent = score;
+                playSound('Correct! ' + target);
+                showReward('✅ +' + (10*level));
+                
+                if(correct % 3 === 0) {
+                    level++;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    showReward('🌟 Level Up!');
+                    playSound('Level Up!');
+                }
+                saveProgress();
+                setTimeout(newRound, 1000);
+            } else {
+                playSound('Try again');
+                showReward('❌ Try again');
+            }
+        }
+
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1000);
+        }
+
+        function loadProgress() {
+            fetch('/api/progress/language_game')
+                .then(res => res.json())
+                .then(data => {
+                    level = data.level || 1;
+                    score = data.score || 0;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    document.getElementById('score').textContent = score;
+                    newRound();
+                })
+                .catch(() => newRound());
+        }
+
+        loadProgress();
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("language_game.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>

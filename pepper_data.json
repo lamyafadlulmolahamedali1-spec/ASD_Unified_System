@@ -1,0 +1,46 @@
+{
+  "score": 0,
+  "interactions": [
+    {
+      "time": "2026-03-26T15:14:59.050997",
+      "user": "hello",
+      "pepper": "Hello! \ud83d\udc4b"
+    },
+    {
+      "time": "2026-03-26T15:15:38.862991",
+      "user": "what can you see right now",
+      "pepper": "That's awesome! Tell me more! \ud83d\ude0a"
+    },
+    {
+      "time": "2026-03-26T15:15:58.314753",
+      "user": "how to wash me face",
+      "pepper": "\ud83d\udcfa Opening cartoon video about wash me face! \ud83c\udf1f"
+    },
+    {
+      "time": "2026-03-26T15:17:07.834005",
+      "user": "tell me about colors",
+      "pepper": "Colors burst everywhere\u2014so splash your life with vibrant hues and keep dazzling the world!"
+    },
+    {
+      "time": "2026-03-26T15:17:57.537774",
+      "user": "what color of the sky",
+      "pepper": "The sky\u2019s a stunning blue\u2014just like your bright, hopeful spirit!"
+    },
+    {
+      "time": "2026-03-26T15:18:26.121733",
+      "user": "thats cool",
+      "pepper": "That's awesome! Tell me more! \ud83d\ude0a"
+    },
+    {
+      "time": "2026-03-26T15:19:11.059891",
+      "user": "i want to play a game",
+      "pepper": "Absolutely! \ud83c\udfb2 Ready to roll the dice\u2014what game are you craving?"
+    },
+    {
+      "time": "2026-03-26T15:19:41.544932",
+      "user": "aba matching",
+      "pepper": "That's awesome! Tell me more! \ud83d\ude0a"
+    }
+  ],
+  "games_played": []
+}

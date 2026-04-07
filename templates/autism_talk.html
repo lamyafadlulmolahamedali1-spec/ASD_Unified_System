@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Autism-Talk - Emotions</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <script src="/static/js/pepper-voice.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .emotion-card {
+            text-align: center;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 30px;
+            margin: 30px 0;
+        }
+        .emotion-icon { font-size: 8em; }
+        .emotion-name { font-size: 2em; margin-top: 20px; }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .option {
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💬 Autism-Talk - Emotions</h1>
+        <div class="emotion-card">
+            <div class="emotion-icon" id="emotionIcon">😊</div>
+            <div class="emotion-name" id="emotionName">Happy</div>
+        </div>
+        <div class="options" id="options"></div>
+        <a href="/" class="back-btn">← Back</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('autism_talk');
+        const emotions = [
+            { icon: '😊', name: 'Happy' },
+            { icon: '😢', name: 'Sad' },
+            { icon: '😡', name: 'Angry' },
+            { icon: '😴', name: 'Tired' },
+            { icon: '🥳', name: 'Excited' },
+            { icon: '😱', name: 'Scared' }
+        ];
+        let currentEmotion = null;
+        
+        PepperVoice.speak("How are they feeling? Let's learn emotions!");
+        
+        function nextRound() {
+            currentEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+            document.getElementById('emotionIcon').textContent = currentEmotion.icon;
+            document.getElementById('emotionName').textContent = currentEmotion.name;
+            
+            const options = [currentEmotion];
+            while(options.length < 4) {
+                const random = emotions[Math.floor(Math.random() * emotions.length)];
+                if (!options.includes(random)) options.push(random);
+            }
+            options.sort(() => Math.random() - 0.5);
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = '';
+            options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = 'option';
+                btn.textContent = opt.name;
+                btn.onclick = () => checkAnswer(opt);
+                optionsDiv.appendChild(btn);
+            });
+        }
+        
+        function checkAnswer(selected) {
+            if (selected.name === currentEmotion.name) {
+                stats.addCorrect();
+                PepperVoice.speak(`Yes! They are ${currentEmotion.name}! Good job!`);
+                setTimeout(nextRound, 1500);
+            } else {
+                stats.addWrong();
+                PepperVoice.speak(`They are ${currentEmotion.name}. Let's try again!`);
+            }
+        }
+        
+        nextRound();
+    </script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pepper Autism Support - Unified Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f3460, #1a1a2e);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #e94560;
+        }
+        
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #ccc;
+        }
+        
+        /* Dashboard Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h2 {
+            color: #e94560;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Chat Area */
+        .chat-area {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background: #e94560;
+            margin-left: auto;
+            text-align: right;
+        }
+        
+        .bot-message {
+            background: #0f3460;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .chat-input button {
+            padding: 10px 20px;
+            background: #e94560;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        /* Breathing Exercise */
+        .breathing-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            animation: breathe 4s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); background: #4a90e2; }
+            50% { transform: scale(1.2); background: #2c5f8a; }
+        }
+        
+        .breathing-text {
+            text-align: center;
+            font-size: 18px;
+        }
+        
+        /* Routine Checklist */
+        .routine-list {
+            list-style: none;
+        }
+        
+        .routine-list li {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .routine-list li.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+            background: rgba(76, 175, 80, 0.3);
+        }
+        
+        .routine-list li:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .quick-btn {
+            padding: 8px 15px;
+            background: #0f3460;
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-btn:hover {
+            background: #e94560;
+            transform: scale(1.05);
+        }
+        
+        /* Stats */
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #e94560;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Pepper Autism Support System</h1>
+        <p>Integrated Dashboard for Parents & Children | ABA | TEACCH | PECS</p>
+    </div>
+    
+    <div class="dashboard">
+        <!-- Card 1: AI Chat -->
+        <div class="card">
+            <h2>💬 AI Support Chat</h2>
+            <div class="chat-area" id="chatArea">
+                <div class="message bot-message">Hello! I'm Pepper. I can help with autism information, breathing exercises, daily routines, and more. How can I help you today?</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chatInput" placeholder="Type your question..." onkeypress="if(event.key==='Enter') sendMessage()">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="quickQuestion('what is autism')">❓ What is Autism?</button>
+                <button class="quick-btn" onclick="quickQuestion('how to communicate')">💬 Communication Tips</button>
+                <button class="quick-btn" onclick="quickQuestion('sensory overload')">🌊 Sensory Overload</button>
+                <button class="quick-btn" onclick="quickQuestion('aba therapy')">📚 ABA Therapy</button>
+                <button class="quick-btn" onclick="quickQuestion('breathing')">🧘 Breathing Exercise</button>
+                <button class="quick-btn" onclick="quickQuestion('routine')">📋 Daily Routine</button>
+            </div>
+        </div>
+        
+        <!-- Card 2: Breathing Exercise -->
+        <div class="card">
+            <h2>🧘 Calm Down - Breathing Exercise</h2>
+            <div class="breathing-circle" id="breathingCircle" onclick="startBreathing()">
+                <span style="text-align: center;">🧘<br>Breathe</span>
+            </div>
+            <div class="breathing-text" id="breathingText">
+                Click the circle to start breathing exercise
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="startBreathing()">Start Breathing</button>
+                <button class="quick-btn" onclick="playCalmSound()">🎵 Calm Sound</button>
+            </div>
+        </div>
+        
+        <!-- Card 3: Daily Routine -->
+        <div class="card">
+            <h2>📋 Daily Routine Checklist</h2>
+            <div style="margin-bottom: 10px;">
+                <button class="quick-btn" onclick="showMorningRoutine()">🌅 Morning</button>
+                <button class="quick-btn" onclick="showAfternoonRoutine()">☀️ Afternoon</button>
+                <button class="quick-btn" onclick="showEveningRoutine()">🌙 Evening</button>
+            </div>
+            <ul class="routine-list" id="routineList">
+                <li onclick="toggleTask(this)">🪥 Brush teeth</li>
+                <li onclick="toggleTask(this)">🧼 Wash face</li>
+                <li onclick="toggleTask(this)">👕 Get dressed</li>
+                <li onclick="toggleTask(this)">🍳 Eat breakfast</li>
+            </ul>
+            <div class="stat">
+                <span>✅ Tasks completed today:</span>
+                <span class="stat-value" id="taskCount">0</span>
+            </div>
+        </div>
+        
+        <!-- Card 4: Parent Dashboard - Progress Tracking -->
+        <div class="card">
+            <h2>📊 Parent Dashboard</h2>
+            <div class="stat">
+                <span>📅 Sessions this week:</span>
+                <span class="stat-value" id="sessionCount">0</span>
+            </div>
+            <div class="stat">
+                <span>💬 Messages exchanged:</span>
+                <span class="stat-value" id="messageCount">0</span>
+            </div>
+            <div class="stat">
+                <span>🧘 Breathing exercises:</span>
+                <span class="stat-value" id="breathingCount">0</span>
+            </div>
+            <div class="stat">
+                <span>✅ Tasks completed:</span>
+                <span class="stat-value" id="completedTasksCount">0</span>
+            </div>
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="generateReport()">📄 Generate Report</button>
+                <button class="quick-btn" onclick="resetStats()">🔄 Reset Stats</button>
+            </div>
+            <div id="reportArea" style="margin-top: 15px; font-size: 12px; color: #ccc;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Autism Knowledge Base
+        const knowledgeBase = {
+            "what is autism": "Autism is a developmental condition that affects how a person communicates and interacts with the world. Every person with autism is unique with their own strengths and challenges.",
+            "signs of autism": "Common signs include difficulty with social interaction, repetitive behaviors, sensitivity to sounds or lights, and focused interests.",
+            "how to communicate": "Use simple, clear language. Be patient. Use visual supports like pictures. Listen actively and validate their feelings.",
+            "sensory overload": "Create a quiet space, use noise-canceling headphones, offer a weighted blanket, reduce bright lights, and give time to calm down.",
+            "aba therapy": "ABA is Applied Behavior Analysis. It uses positive reinforcement to teach new skills and reduce challenging behaviors.",
+            "what is pecs": "PECS is Picture Exchange Communication System. It helps non-verbal children communicate using pictures.",
+            "how to help meltdown": "Stay calm, reduce sensory input, don't argue, ensure safety, and give space to calm down.",
+            "best toys for autism": "Sensory toys, fidget spinners, weighted blankets, puzzles, and visual schedule boards are great options.",
+            "how to prepare for school": "Visit the school beforehand, create a visual schedule, communicate with teachers, and practice routines at home."
+        };
+        
+        // Daily Routine Data
+        const routines = {
+            morning: ["🪥 Brush teeth", "🧼 Wash face", "👕 Get dressed", "🍳 Eat breakfast", "🎒 Pack bag"],
+            afternoon: ["📚 Learning time", "🎮 Play time", "🍎 Eat lunch", "😴 Rest time", "🚶‍♂️ Walk outside"],
+            evening: ["🍽️ Dinner", "🛁 Bath time", "📖 Read story", "🪥 Brush teeth", "😴 Bedtime"]
+        };
+        
+        let currentRoutine = "morning";
+        let sessionCount = localStorage.getItem("sessionCount") ? parseInt(localStorage.getItem("sessionCount")) : 0;
+        let messageCount = localStorage.getItem("messageCount") ? parseInt(localStorage.getItem("messageCount")) : 0;
+        let breathingCount = localStorage.getItem("breathingCount") ? parseInt(localStorage.getItem("breathingCount")) : 0;
+        let completedTasks = localStorage.getItem("completedTasks") ? JSON.parse(localStorage.getItem("completedTasks")) : [];
+        
+        // Update stats display
+        function updateStats() {
+            document.getElementById("sessionCount").innerText = sessionCount;
+            document.getElementById("messageCount").innerText = messageCount;
+            document.getElementById("breathingCount").innerText = breathingCount;
+            document.getElementById("completedTasksCount").innerText = completedTasks.length;
+        }
+        
+        // Send message to AI
+        async function sendMessage() {
+            const input = document.getElementById("chatInput");
+            const message = input.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, "user");
+            input.value = "";
+            messageCount++;
+            updateStats();
+            localStorage.setItem("messageCount", messageCount);
+            
+            // Get AI response
+            let response = getAIResponse(message);
+            
+            // Check for special commands
+            if (message.toLowerCase().includes("breathe") || message.toLowerCase().includes("breathing")) {
+                response = "Let's do a breathing exercise! Click on the breathing circle to start. 🧘";
+                startBreathing();
+            } else if (message.toLowerCase().includes("routine") || message.toLowerCase().includes("schedule")) {
+                response = "Here's your daily routine! Check the Routine card for Morning, Afternoon, and Evening tasks. 📋";
+                showMorningRoutine();
+            } else if (message.toLowerCase().includes("game")) {
+                response = "Opening games dashboard... 🎮";
+                window.open("http://localhost:5001", "_blank");
+            }
+            
+            // Add bot response
+            setTimeout(() => addMessage(response, "bot"), 500);
+        }
+        
+        function getAIResponse(question) {
+            const q = question.toLowerCase();
+            
+            // Check knowledge base
+            for (let [key, answer] of Object.entries(knowledgeBase)) {
+                if (q.includes(key)) {
+                    return answer;
+                }
+            }
+            
+            // Check for feeling words
+            if (q.includes("sad") || q.includes("upset")) {
+                return "I'm sorry you're feeling sad. I'm here for you. Would you like to do a breathing exercise together? 🧘";
+            }
+            if (q.includes("happy") || q.includes("excited")) {
+                return "I'm so glad you're happy! Your joy makes me happy too! 😊";
+            }
+            if (q.includes("tired")) {
+                return "It's okay to be tired. Maybe we can do a quiet activity or rest. 💤";
+            }
+            
+            return "That's a good question! I'm here to support you. Can you tell me more about what you'd like to know? 🤗";
+        }
+        
+        function addMessage(text, sender) {
+            const chatArea = document.getElementById("chatArea");
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${sender === "user" ? "user-message" : "bot-message"}`;
+            messageDiv.innerHTML = text;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function quickQuestion(question) {
+            document.getElementById("chatInput").value = question;
+            sendMessage();
+        }
+        
+        // Breathing Exercise
+        let breathingInterval;
+        let breathPhase = 0;
+        
+        function startBreathing() {
+            breathingCount++;
+            updateStats();
+            localStorage.setItem("breathingCount", breathingCount);
+            
+            const textDiv = document.getElementById("breathingText");
+            const circle = document.getElementById("breathingCircle");
+            
+            let phase = 0;
+            const phases = ["Breathe in... 4 seconds", "Hold... 4 seconds", "Breathe out... 4 seconds"];
+            
+            if (breathingInterval) clearInterval(breathingInterval);
+            
+            let step = 0;
+            breathingInterval = setInterval(() => {
+                textDiv.innerHTML = phases[step % 3];
+                step++;
+                if (step >= 9) {
+                    clearInterval(breathingInterval);
+                    textDiv.innerHTML = "✨ Great job! You're calm now. ✨";
+                    setTimeout(() => {
+                        textDiv.innerHTML = "Click the circle to start breathing exercise";
+                    }, 3000);
+                }
+            }, 4000);
+        }
+        
+        function playCalmSound() {
+            addMessage("Playing calm sounds can help with relaxation. Try deep breathing while listening to soft music. 🎵", "bot");
+        }
+        
+        // Routine Functions
+        function showMorningRoutine() {
+            currentRoutine = "morning";
+            updateRoutineList(routines.morning);
+        }
+        
+        function showAfternoonRoutine() {
+            currentRoutine = "afternoon";
+            updateRoutineList(routines.afternoon);
+        }
+        
+        function showEveningRoutine() {
+            currentRoutine = "evening";
+            updateRoutineList(routines.evening);
+        }
+        
+        function updateRoutineList(tasks) {
+            const list = document.getElementById("routineList");
+            list.innerHTML = "";
+            tasks.forEach(task => {
+                const li = document.createElement("li");
+                li.innerHTML = task;
+                li.onclick = () => toggleTask(li);
+                if (completedTasks.includes(task)) {
+                    li.classList.add("completed");
+                }
+                list.appendChild(li);
+            });
+        }
+        
+        function toggleTask(element) {
+            const taskText = element.innerHTML;
+            if (element.classList.contains("completed")) {
+                element.classList.remove("completed");
+                completedTasks = completedTasks.filter(t => t !== taskText);
+            } else {
+                element.classList.add("completed");
+                completedTasks.push(taskText);
+            }
+            localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
+            updateStats();
+        }
+        
+        function generateReport() {
+            const report = `
+                📊 WEEKLY REPORT 📊
+                ===================
+                📅 Sessions: ${sessionCount}
+                💬 Messages: ${messageCount}
+                🧘 Breathing exercises: ${breathingCount}
+                ✅ Tasks completed: ${completedTasks.length}
+                ===================
+                Keep up the great work! 🌟
+            `;
+            document.getElementById("reportArea").innerHTML = report.replace(/\n/g, "<br>");
+            addMessage("Here's your weekly progress report! Check the Parent Dashboard card. 📊", "bot");
+        }
+        
+        function resetStats() {
+            sessionCount = 0;
+            messageCount = 0;
+            breathingCount = 0;
+            completedTasks = [];
+            localStorage.setItem("sessionCount", sessionCount);
+            localStorage.setItem("messageCount", messageCount);
+            localStorage.setItem("breathingCount", breathingCount);
+            localStorage.setItem("completedTasks", JSON.stringify(completedTasks));
+            updateStats();
+            updateRoutineList(routines.morning);
+            addMessage("Stats have been reset. Ready for a fresh start! 🌟", "bot");
+        }
+        
+        // Initialize
+        sessionCount++;
+        localStorage.setItem("sessionCount", sessionCount);
+        updateStats();
+        showMorningRoutine();
+        
+        // Auto-scroll chat
+        setInterval(() => {
+            const chatArea = document.getElementById("chatArea");
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }, 100);
+    </script>
+</body>
+</html>

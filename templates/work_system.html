@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Work System</title>
+    <script src="/static/js/game-tracker.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+        }
+        h1 { text-align: center; color: #333; }
+        .task-list {
+            margin: 30px 0;
+        }
+        .task-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .task-item.completed { background: #d4edda; }
+        .back-btn { display: block; text-align: center; margin-top: 20px; color: #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Work System</h1>
+        <div id="tasks"></div>
+        <a href="/" class="back-btn">← Back to Games</a>
+    </div>
+    
+    <script>
+        const stats = new GameStats('work_system');
+        
+        let tasks = [
+            'Complete worksheet', 'Read a book', 'Practice writing', 'Solve math', 'Draw a picture'
+        ].map((name, i) => ({ name, done: false }));
+        
+        function completeTask(index) {
+            if (!tasks[index].done) {
+                tasks[index].done = true;
+                stats.addCorrect(); // TRACK CORRECT!
+                
+                if (tasks.every(t => t.done)) {
+                    stats.levelUp();
+                    setTimeout(() => {
+                        alert('🎉 Great job! New tasks!');
+                        tasks.forEach(t => t.done = false);
+                        renderTasks();
+                    }, 1000);
+                } else {
+                    renderTasks();
+                }
+            }
+        }
+        
+        function renderTasks() {
+            const container = document.getElementById('tasks');
+            container.innerHTML = '<div class="task-list">';
+            tasks.forEach((task, i) => {
+                container.innerHTML += `
+                    <div class="task-item ${task.done ? 'completed' : ''}" onclick="completeTask(${i})">
+                        <span>${task.name}</span>
+                        <span>${task.done ? '✅' : '⬜'}</span>
+                    </div>
+                `;
+            });
+            container.innerHTML += '</div>';
+        }
+        
+        renderTasks();
+    </script>
+</body>
+</html>

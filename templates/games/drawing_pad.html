@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Pad - Free Draw</title>
+    <style>
+        body { font-family: Arial; background: linear-gradient(135deg, #FF9A9E, #FAD0C4); padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .game-area { background: white; border-radius: 30px; padding: 30px; text-align: center; }
+        
+        canvas {
+            border: 3px solid #ddd;
+            border-radius: 30px;
+            cursor: crosshair;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .tools {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .color-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .color-btn:hover { transform: scale(1.2); }
+        .color-btn.selected { border-color: #333; transform: scale(1.1); }
+        
+        .tool-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .tool-btn:hover { transform: scale(1.1); }
+        .clear-btn { background: #f44336; color: white; }
+        .save-btn { background: #4CAF50; color: white; }
+        
+        .score-board { background: #4CAF50; color: white; padding: 15px 30px; border-radius: 30px; }
+        .level-badge { background: #FF9800; color: white; padding: 10px 25px; border-radius: 25px; margin-right: 15px; }
+        .back-btn { background: #f44336; color: white; padding: 10px 25px; border-radius: 30px; text-decoration: none; }
+        .reward { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 4em; background: white; padding: 30px; border-radius: 60px; animation: pop 0.5s; z-index: 1000; }
+        @keyframes pop { 0%{transform:translate(-50%,-50%) scale(0)} 100%{transform:translate(-50%,-50%) scale(1)} }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="level-badge" id="levelDisplay">Level 1</span>
+                <span class="score-board" id="score">0</span>
+            </div>
+            <h1>✏️ Drawing Pad</h1>
+            <a href="/child/dashboard" class="back-btn">🔙 Back</a>
+        </div>
+        <div class="game-area">
+            <div class="tools" id="colorPalette"></div>
+            <canvas id="canvas" width="600" height="400"></canvas>
+            <div class="tools">
+                <button class="tool-btn clear-btn" onclick="clearCanvas()">🧹 Clear</button>
+                <button class="tool-btn save-btn" onclick="saveDrawing()">💾 Save</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const colors = [
+            '#FF0000','#00FF00','#0000FF','#FFFF00','#FFA500','#800080',
+            '#FFC0CB','#8B4513','#000000','#808080','#00FFFF','#FF00FF'
+        ];
+
+        let canvas = document.getElementById('canvas');
+        let ctx = canvas.getContext('2d');
+        let currentColor = colors[0];
+        let level = 1;
+        let score = 0;
+        let drawing = false;
+
+        function init() {
+            let palette = document.getElementById('colorPalette');
+            colors.forEach((c, i) => {
+                let btn = document.createElement('div');
+                btn.className = 'color-btn' + (i === 0 ? ' selected' : '');
+                btn.style.backgroundColor = c;
+                btn.onclick = () => {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    currentColor = c;
+                };
+                palette.appendChild(btn);
+            });
+
+            loadProgress();
+
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+        }
+
+        function startDrawing(e) {
+            drawing = true;
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+        }
+
+        function draw(e) {
+            if(!drawing) return;
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = 5;
+            ctx.lineCap = 'round';
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(e.offsetX, e.offsetY);
+            
+            score++;
+            if(score % 50 === 0) {
+                level++;
+                document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                showReward('🌟 Level Up!');
+            }
+            document.getElementById('score').textContent = score;
+        }
+
+        function stopDrawing() {
+            drawing = false;
+            ctx.beginPath();
+        }
+
+        function clearCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            showReward('🧹 Canvas cleared');
+        }
+
+        function saveDrawing() {
+            score += 50;
+            document.getElementById('score').textContent = score;
+            showReward('💾 Saved! +50');
+            saveProgress();
+        }
+
+        function saveProgress() {
+            fetch('/api/progress/drawing_pad', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ level: level, score: score, correct: true })
+            });
+        }
+
+        function loadProgress() {
+            fetch('/api/progress/drawing_pad')
+                .then(res => res.json())
+                .then(data => {
+                    level = data.level || 1;
+                    score = data.score || 0;
+                    document.getElementById('levelDisplay').textContent = 'Level ' + level;
+                    document.getElementById('score').textContent = score;
+                });
+        }
+
+        function showReward(msg) {
+            let r = document.createElement('div');
+            r.className = 'reward';
+            r.textContent = msg;
+            document.body.appendChild(r);
+            setTimeout(() => r.remove(), 1500);
+        }
+
+        init();
+    </script>
+</body>
+</html>

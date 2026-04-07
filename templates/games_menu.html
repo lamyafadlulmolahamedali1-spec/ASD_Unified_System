@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Games</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);padding:20px}
+        .container{max-width:1200px;margin:0 auto;background:white;border-radius:30px;padding:30px}
+        h1{text-align:center;color:#764ba2}
+        .child-info{text-align:center;background:#f0f0f0;padding:15px;border-radius:20px;margin:20px 0}
+        .notifications{background:#fff3cd;border-left:4px solid #ff9800;padding:15px;margin:20px 0;border-radius:10px}
+        .notification-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #ffe0b3}
+        .notification-time{font-weight:bold;color:#ff9800}
+        .notification-task{flex:1;margin-left:10px}
+        .complete-btn{background:#4caf50;color:white;border:none;padding:5px 15px;border-radius:20px;cursor:pointer}
+        .games-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:15px;margin-top:20px}
+        .game-card{background:#f8f9fa;border-radius:15px;padding:20px;text-align:center;text-decoration:none;display:block;color:#333;transition:0.3s;border:2px solid transparent}
+        .game-card:hover{transform:translateY(-5px);border-color:#764ba2}
+        .game-icon{font-size:40px}
+        .game-name{font-weight:bold;margin-top:10px;font-size:12px}
+        .no-notifications{color:#888;text-align:center;padding:10px}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎮 Games</h1>
+    <div class="child-info">👋 Hello, <strong>{{ child_name }}</strong>!</div>
+    
+    <div id="notifications" class="notifications">
+        <h3>🔔 Your Tasks</h3>
+        <div id="notificationsList">Loading...</div>
+    </div>
+    
+    <div class="games-grid">
+        {% for g in games %}
+        <a href="/game/{{ g }}" class="game-card">
+            <div class="game-icon">{{ icons[g] }}</div>
+            <div class="game-name">{{ g.replace('_',' ').title() }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+let childName = "{{ child_name }}";
+let notifications = [];
+
+async function loadNotifications() {
+    try {
+        let res = await fetch(`/api/teacch/notifications/${childName}`);
+        notifications = await res.json();
+        let html = '';
+        if (notifications.length === 0) {
+            html = '<div class="no-notifications">✅ No pending tasks! Great job!</div>';
+        } else {
+            notifications.forEach(n => {
+                html += `
+                    <div class="notification-item">
+                        <div class="notification-time">⏰ ${n.time}</div>
+                        <div class="notification-task">${n.task}</div>
+                        <button class="complete-btn" onclick="completeTask(${n.id})">✓ Complete</button>
+                    </div>
+                `;
+            });
+        }
+        document.getElementById('notificationsList').innerHTML = html;
+    } catch(e) { console.error(e); }
+}
+
+async function completeTask(taskId) {
+    try {
+        await fetch(`/api/teacch/complete/${childName}/${taskId}`, {method: 'POST'});
+        await loadNotifications();
+        alert('✅ Task completed! Great job!');
+    } catch(e) { console.error(e); }
+}
+
+loadNotifications();
+setInterval(loadNotifications, 30000);
+</script>
+</body></html>

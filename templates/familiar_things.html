@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Familiar Things - Learn About Your World</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 60px;
+            padding: 40px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .category-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 40px 0;
+        }
+        
+        .category-tab {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 60px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .category-tab:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+        
+        .category-tab.active {
+            transform: scale(1.1);
+        }
+        
+        .game-area {
+            display: flex;
+            gap: 50px;
+            margin: 50px 0;
+            flex-wrap: wrap;
+        }
+        
+        .items-area {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .item-card {
+            background: #f8f9fa;
+            border-radius: 30px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 4px solid transparent;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+        }
+        
+        .item-card:hover {
+            transform: translateY(-10px);
+            border-color: #667eea;
+        }
+        
+        .item-card.selected {
+            border-color: #ffd700;
+            background: #fff3cd;
+        }
+        
+        .item-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+        
+        .item-name {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .names-area {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .names-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .name-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 30px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 15px 30px rgba(102,126,234,0.3);
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .name-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 40px rgba(102,126,234,0.5);
+        }
+        
+        .name-card.matched {
+            opacity: 0.5;
+            pointer-events: none;
+            background: #28a745;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 25px;
+            border-radius: 30px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        
+        .message {
+            text-align: center;
+            padding: 25px;
+            border-radius: 50px;
+            font-size: 1.5em;
+            margin: 30px 0;
+            animation: slideIn 0.5s;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 3px solid #28a745;
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 15px;
+            height: 15px;
+            background: var(--color);
+            animation: confettiFall 4s ease-out forwards;
+            z-index: 9999;
+            border-radius: 50%;
+        }
+        
+        @keyframes confettiFall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .celebration-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 5em;
+            animation: celebrate 2s ease;
+            z-index: 10000;
+        }
+        
+        @keyframes celebrate {
+            0% { transform: translate(-50%, -50%) scale(0) rotate(0deg); }
+            50% { transform: translate(-50%, -50%) scale(1.5) rotate(180deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Familiar Things - Learn About Your World</h1>
+        
+        <div class="category-tabs" id="categoryTabs">
+            <button class="category-tab" style="background: #ff9a9e; color: white;" onclick="changeCategory('body')">👤 Body Parts</button>
+            <button class="category-tab" style="background: #fad0c4; color: #333;" onclick="changeCategory('room')">🛏️ My Room</button>
+            <button class="category-tab" style="background: #a1c4fd; color: white;" onclick="changeCategory('school')">📚 School</button>
+            <button class="category-tab" style="background: #c2e9fb; color: #333;" onclick="changeCategory('clothes')">👕 Clothes</button>
+            <button class="category-tab" style="background: #d4fc79; color: #333;" onclick="changeCategory('family')">👨‍👩‍👧 Family</button>
+            <button class="category-tab" style="background: #96e6a1; color: #333;" onclick="changeCategory('numbers')">🔢 Numbers 1-5</button>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="level">1</div>
+                <div>Level</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="score">0</div>
+                <div>Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="matches">0/10</div>
+                <div>Matches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="streak">0</div>
+                <div>Streak</div>
+            </div>
+        </div>
+        
+        <div class="game-area">
+            <div class="items-area">
+                <h2 style="margin-bottom: 20px;">🔍 Find These:</h2>
+                <div class="items-grid" id="itemsGrid"></div>
+            </div>
+            
+            <div class="names-area">
+                <h2 style="margin-bottom: 20px;">📝 Match With:</h2>
+                <div class="names-grid" id="namesGrid"></div>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+    
+    <script>
+        let currentCategory = 'body';
+        let level = 1;
+        let score = 0;
+        let matches = 0;
+        let streak = 0;
+        let selectedItem = null;
+        
+        const categories = {
+            body: {
+                name: 'Body Parts',
+                items: [
+                    {icon: '👤', name: 'Head', match: 'head'},
+                    {icon: '👁️', name: 'Eyes', match: 'eyes'},
+                    {icon: '👃', name: 'Nose', match: 'nose'},
+                    {icon: '👄', name: 'Mouth', match: 'mouth'},
+                    {icon: '👂', name: 'Ears', match: 'ears'},
+                    {icon: '🖐️', name: 'Hands', match: 'hands'},
+                    {icon: '🦶', name: 'Feet', match: 'feet'},
+                    {icon: '💪', name: 'Arms', match: 'arms'},
+                    {icon: '🦵', name: 'Legs', match: 'legs'}
+                ]
+            },
+            room: {
+                name: 'My Room',
+                items: [
+                    {icon: '🛏️', name: 'Bed', match: 'bed'},
+                    {icon: '🚪', name: 'Door', match: 'door'},
+                    {icon: '🪑', name: 'Chair', match: 'chair'},
+                    {icon: '📚', name: 'Books', match: 'books'},
+                    {icon: '💡', name: 'Lamp', match: 'lamp'},
+                    {icon: '🧸', name: 'Toys', match: 'toys'},
+                    {icon: '👕', name: 'Closet', match: 'closet'},
+                    {icon: '🖼️', name: 'Picture', match: 'picture'}
+                ]
+            },
+            school: {
+                name: 'School',
+                items: [
+                    {icon: '📖', name: 'Book', match: 'book'},
+                    {icon: '✏️', name: 'Pencil', match: 'pencil'},
+                    {icon: '📏', name: 'Ruler', match: 'ruler'},
+                    {icon: '🎒', name: 'Bag', match: 'bag'},
+                    {icon: '🏫', name: 'School', match: 'school'},
+                    {icon: '🧑‍🏫', name: 'Teacher', match: 'teacher'},
+                    {icon: '🧑‍🎓', name: 'Student', match: 'student'},
+                    {icon: '📝', name: 'Notebook', match: 'notebook'}
+                ]
+            },
+            clothes: {
+                name: 'Clothes',
+                items: [
+                    {icon: '👕', name: 'Shirt', match: 'shirt'},
+                    {icon: '👖', name: 'Pants', match: 'pants'},
+                    {icon: '🧥', name: 'Jacket', match: 'jacket'},
+                    {icon: '🧦', name: 'Socks', match: 'socks'},
+                    {icon: '👟', name: 'Shoes', match: 'shoes'},
+                    {icon: '🧢', name: 'Hat', match: 'hat'},
+                    {icon: '🧣', name: 'Scarf', match: 'scarf'},
+                    {icon: '🧤', name: 'Gloves', match: 'gloves'}
+                ]
+            },
+            family: {
+                name: 'Family',
+                items: [
+                    {icon: '👨', name: 'Father', match: 'father'},
+                    {icon: '👩', name: 'Mother', match: 'mother'},
+                    {icon: '👧', name: 'Daughter', match: 'daughter'},
+                    {icon: '👦', name: 'Son', match: 'son'},
+                    {icon: '👴', name: 'Grandpa', match: 'grandpa'},
+                    {icon: '👵', name: 'Grandma', match: 'grandma'},
+                    {icon: '👶', name: 'Baby', match: 'baby'},
+                    {icon: '🐕', name: 'Pet', match: 'pet'}
+                ]
+            },
+            numbers: {
+                name: 'Numbers 1-5',
+                items: [
+                    {icon: '1️⃣', name: 'One', match: '1', count: '🍎'},
+                    {icon: '2️⃣', name: 'Two', match: '2', count: '🍎🍎'},
+                    {icon: '3️⃣', name: 'Three', match: '3', count: '🍎🍎🍎'},
+                    {icon: '4️⃣', name: 'Four', match: '4', count: '🍎🍎🍎🍎'},
+                    {icon: '5️⃣', name: 'Five', match: '5', count: '🍎🍎🍎🍎🍎'}
+                ]
+            }
+        };
+        
+        function changeCategory(category) {
+            currentCategory = category;
+            
+            // Update active tab
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayItems();
+            displayNames();
+        }
+        
+        function displayItems() {
+            const category = categories[currentCategory];
+            const items = category.items;
+            const grid = document.getElementById('itemsGrid');
+            grid.innerHTML = '';
+            
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.dataset.match = item.match;
+                card.onclick = () => selectItem(card, item.match);
+                
+                if (currentCategory === 'numbers') {
+                    card.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-name">${item.name}</div>
+                        <div style="font-size: 1.5em; margin-top: 10px;">${item.count}</div>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="item-icon">${item.icon}</div>
+                        <div class="item-name">${item.name}</div>
+                    `;
+                }
+                
+                grid.appendChild(card);
+            });
+        }
+        
+        function displayNames() {
+            const category = categories[currentCategory];
+            const items = category.items;
+            const grid = document.getElementById('namesGrid');
+            grid.innerHTML = '';
+            
+            // Shuffle names
+            const shuffled = [...items].sort(() => Math.random() - 0.5);
+            
+            shuffled.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'name-card';
+                card.dataset.match = item.match;
+                card.onclick = () => selectName(card, item.match);
+                card.textContent = item.name;
+                grid.appendChild(card);
+            });
+        }
+        
+        function selectItem(card, match) {
+            // Remove previous selection
+            document.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            selectedItem = {match: match, card: card};
+        }
+        
+        function selectName(card, match) {
+            if (!selectedItem) {
+                showMessage('First select an item!', 'warning');
+                return;
+            }
+            
+            if (selectedItem.match === match) {
+                // Correct match
+                card.classList.add('matched');
+                selectedItem.card.style.opacity = '0.5';
+                selectedItem.card.style.pointerEvents = 'none';
+                
+                matches++;
+                score += 10 * level;
+                streak++;
+                
+                if (streak >= 3) {
+                    score += 20;
+                    showMessage('🔥 Hot Streak! +20 points!', 'success');
+                }
+                
+                if (matches % 5 === 0) {
+                    level++;
+                    celebrate();
+                }
+                
+                showMessage('✅ Correct! Great job!', 'success');
+                createConfetti(10);
+                
+                if (matches === categories[currentCategory].items.length) {
+                    completeCategory();
+                }
+            } else {
+                // Wrong match
+                score = Math.max(0, score - 5);
+                streak = 0;
+                showMessage('❌ Try again!', 'error');
+            }
+            
+            selectedItem.card.classList.remove('selected');
+            selectedItem = null;
+            updateStats();
+        }
+        
+        function showMessage(text, type) {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = 'message ' + (type === 'success' ? 'success' : '');
+            setTimeout(() => {
+                msg.textContent = '';
+            }, 2000);
+        }
+        
+        function createConfetti(count) {
+            for(let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.background = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 4000);
+                }, i * 100);
+            }
+        }
+        
+        function celebrate() {
+            const overlay = document.createElement('div');
+            overlay.className = 'celebration-overlay';
+            overlay.textContent = '🎉 LEVEL UP! 🎉';
+            document.body.appendChild(overlay);
+            
+            createConfetti(50);
+            
+            setTimeout(() => {
+                overlay.remove();
+            }, 2000);
+        }
+        
+        function completeCategory() {
+            showMessage('🎉 Category Complete! +100 points!', 'success');
+            score += 100;
+            createConfetti(30);
+            
+            // Reset matches
+            matches = 0;
+            
+            // Switch to next category after delay
+            setTimeout(() => {
+                const categories = ['body', 'room', 'school', 'clothes', 'family', 'numbers'];
+                const currentIndex = categories.indexOf(currentCategory);
+                const nextIndex = (currentIndex + 1) % categories.length;
+                changeCategory(categories[nextIndex]);
+            }, 3000);
+        }
+        
+        function updateStats() {
+            document.getElementById('level').textContent = level;
+            document.getElementById('score').textContent = score;
+            document.getElementById('matches').textContent = matches + '/' + categories[currentCategory].items.length;
+            document.getElementById('streak').textContent = streak;
+        }
+        
+        // Initialize
+        displayItems();
+        displayNames();
+        
+        // Make first tab active
+        document.querySelector('.category-tab').classList.add('active');
+    </script>
+<script src="/static/js/game-tracker.js"></script>
+<script>
+    // تهيئة التتبع لهذه اللعبة
+    const stats = new GameStats("familiar_things.html.replace(.html,)");
+    // ربط الوظائف: قومي باستدعاء stats.addCorrect() عند الإجابة الصحيحة، و stats.addWrong() عند الإجابة الخاطئة
+</script>
+<script src="/static/js/auto-tracker.js"></script>
+</body>
+</html>
